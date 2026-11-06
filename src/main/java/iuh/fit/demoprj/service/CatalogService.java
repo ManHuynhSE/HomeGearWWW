@@ -5,6 +5,13 @@ import iuh.fit.demoprj.model.enums.Role;
 import iuh.fit.demoprj.repository.*;
 
 import java.util.List;
+import java.time.LocalDateTime;
+import java.net.URI;
+import java.math.BigDecimal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,15 +19,59 @@ import org.springframework.transaction.annotation.Transactional;
 public class CatalogService {
     private final ProductRepository products;
     private final CategoryRepository categories;
+    private final OrderItemRepository orderItems;
 
-    public CatalogService(ProductRepository products, CategoryRepository categories) {
+    public CatalogService(ProductRepository products, CategoryRepository categories,
+                          OrderItemRepository orderItems) {
         this.products = products;
         this.categories = categories;
+        this.orderItems = orderItems;
     }
 
     public List<Product> search(String keyword) {
         if (keyword == null || keyword.isBlank()) return products.findAll();
         return products.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword);
+    }
+
+    public List<Product> searchSuggestions(String keyword) {
+        return products.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
+                keyword, keyword, PageRequest.of(0, 7));
+    }
+
+    public Page<Product> searchCatalog(String keyword, Long categoryId, BigDecimal minPrice,
+                                        BigDecimal maxPrice, boolean inStockOnly,
+                                        String sortBy, int page, int pageSize) {
+        if (minPrice != null && minPrice.signum() < 0
+                || maxPrice != null && maxPrice.signum() < 0
+                || minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            throw new IllegalArgumentException("Khoảng giá không hợp lệ.");
+        }
+        String normalizedKeyword = keyword == null || keyword.isBlank() ? null : keyword.trim();
+        Sort sort = "bestSelling".equals(sortBy) ? Sort.unsorted() : catalogSort(sortBy);
+        Pageable pageable = PageRequest.of(Math.max(0, page), pageSize, sort);
+        if ("bestSelling".equals(sortBy)) {
+            return orderItems.findBestSellingCatalog(categoryId, normalizedKeyword,
+                    minPrice, maxPrice, inStockOnly, pageable);
+        }
+        return products.searchCatalog(normalizedKeyword, categoryId, minPrice, maxPrice,
+                inStockOnly, pageable);
+    }
+
+    private Sort catalogSort(String sortBy) {
+        return switch (sortBy == null ? "" : sortBy) {
+            case "priceAsc" -> Sort.by(Sort.Direction.ASC, "price").and(Sort.by(Sort.Direction.DESC, "id"));
+            case "priceDesc" -> Sort.by(Sort.Direction.DESC, "price").and(Sort.by(Sort.Direction.DESC, "id"));
+            default -> Sort.by(Sort.Direction.DESC, "id");
+        };
+    }
+
+    public List<Product> getNewArrivals() {
+        return products.findTop6ByOrderByIdDesc();
+    }
+
+    public List<Product> getActivePromotions(LocalDateTime now) {
+        return products.findByOriginalPriceIsNotNullAndPromotionStartsAtLessThanEqualAndPromotionEndsAtGreaterThanOrderByPromotionEndsAtAsc(
+                now, now);
     }
 
     public Product getProduct(Long id) {
@@ -64,10 +115,18 @@ public class CatalogService {
 
     @Transactional
     public Product saveProduct(Long id, String name, java.math.BigDecimal price, int stock,
-                               String description, Long categoryId) {
+                               java.math.BigDecimal originalPrice, LocalDateTime promotionStartsAt,
+                               LocalDateTime promotionEndsAt, String description,
+                               String imageUrl, Long categoryId) {
         String normalizedName = name == null ? "" : name.trim();
         if (normalizedName.isBlank() || price == null || price.signum() <= 0 || stock < 0) {
             throw new IllegalArgumentException("Tên bắt buộc; giá phải lớn hơn 0; tồn kho không được âm.");
+        }
+        if (originalPrice == null && (promotionStartsAt != null || promotionEndsAt != null)
+                || originalPrice != null && (originalPrice.compareTo(price) <= 0
+                || promotionStartsAt == null || promotionEndsAt == null
+                || !promotionEndsAt.isAfter(promotionStartsAt))) {
+            throw new IllegalArgumentException("Khuyến mãi cần giá gốc lớn hơn giá bán và thời gian bắt đầu/kết thúc hợp lệ.");
         }
         Category category = getCategory(categoryId);
         boolean duplicate = id == null
@@ -80,10 +139,29 @@ public class CatalogService {
                 : getProduct(id);
         product.setName(normalizedName);
         product.setPrice(price);
+        product.setOriginalPrice(originalPrice);
+        product.setPromotionStartsAt(promotionStartsAt);
+        product.setPromotionEndsAt(promotionEndsAt);
         product.setStock(stock);
         product.setDescription(description == null ? "" : description.trim());
+        product.setImageUrl(normalizeImageUrl(imageUrl));
         product.setCategory(category);
         return products.save(product);
+    }
+
+    private String normalizeImageUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) return null;
+        String normalized = imageUrl.trim();
+        if (normalized.startsWith("/") && !normalized.startsWith("//")) return normalized;
+        try {
+            URI uri = URI.create(normalized);
+            if (uri.isAbsolute() && "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null) {
+                return normalized;
+            }
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Ảnh sản phẩm phải là đường dẫn nội bộ hoặc URL HTTPS hợp lệ.");
+        }
+        throw new IllegalArgumentException("Ảnh sản phẩm phải là đường dẫn nội bộ hoặc URL HTTPS hợp lệ.");
     }
 
     @Transactional

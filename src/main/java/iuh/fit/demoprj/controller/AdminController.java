@@ -8,7 +8,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Controller
 public class AdminController {
@@ -86,11 +88,18 @@ public class AdminController {
     public String saveProduct(@RequestParam(required = false) Long id,
                               @RequestParam String name,
                               @RequestParam BigDecimal price,
+                              @RequestParam(required = false) BigDecimal originalPrice,
+                              @RequestParam(required = false)
+                              @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime promotionStartsAt,
+                              @RequestParam(required = false)
+                              @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime promotionEndsAt,
                               @RequestParam int stock,
                               @RequestParam(defaultValue = "") String description,
+                              @RequestParam(defaultValue = "") String imageUrl,
                               @RequestParam Long categoryId, Model model) {
         try {
-            catalog.saveProduct(id, name, price, stock, description, categoryId);
+            catalog.saveProduct(id, name, price, stock, originalPrice,
+                    promotionStartsAt, promotionEndsAt, description, imageUrl, categoryId);
             return "redirect:/admin?success=product";
         } catch (IllegalArgumentException ex) {
             return dashboard(id, null, null, null, null, null, null, model.addAttribute("error", ex.getMessage()));

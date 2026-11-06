@@ -5,40 +5,44 @@
 
 ## P0 — Sửa ngay các điểm làm giao diện trông như dữ liệu demo
 
-- [ ] Rà soát và xóa dữ liệu sản phẩm/danh mục thử nghiệm không phù hợp; thay bằng dữ liệu mẫu thật, nhất quán với ngành hàng HomeGear.
-- [ ] Quy định xử lý sản phẩm hết hàng: vẫn hiển thị để khách tham khảo, có nhãn **Hết hàng**, vô hiệu hóa nút thêm giỏ/mua ngay; không cho checkout vượt tồn kho.
-- [ ] Chuẩn hóa định dạng tiền Việt trên toàn ứng dụng: `1.890.000 ₫` (dấu chấm phân tách hàng nghìn, ký hiệu `₫`).
-- [ ] Thay mã trạng thái đơn tiếng Anh trên giao diện bằng nhãn tiếng Việt: `NEW` → **Mới**, `CONFIRMED` → **Đã xác nhận**, `SHIPPING` → **Đang giao**, `COMPLETED` → **Hoàn tất**, `CANCELLED` → **Đã hủy**; giữ mã nội bộ ổn định.
-- [ ] Hoàn thiện footer thay cho footer tối giản hiện tại; đảm bảo thông tin chính sách/liên hệ không phải nội dung placeholder.
-- [ ] Kiểm tra dữ liệu thử nghiệm hiện có trong MariaDB và lập cách dọn/thay thế an toàn trước khi áp dụng; không xóa dữ liệu người dùng thật.
+- [ ] Rà soát và xóa dữ liệu sản phẩm/danh mục thử nghiệm không phù hợp; seed data mới trong code đã là sản phẩm HomeGear, nhưng chưa xác nhận an toàn các bản ghi đang có trong MariaDB.
+- [x] Quy định xử lý sản phẩm hết hàng: vẫn hiển thị để khách tham khảo, có nhãn **Hết hàng**, vô hiệu hóa nút thêm giỏ/mua ngay; checkout tiếp tục kiểm tra tồn kho ở backend.
+- [x] Chuẩn hóa định dạng tiền Việt trên giao diện: `1.890.000 ₫` (dấu chấm phân tách hàng nghìn, ký hiệu `₫`).
+- [x] Thay mã trạng thái đơn tiếng Anh trên giao diện bằng nhãn tiếng Việt, giữ nguyên mã nội bộ trong database.
+- [x] Mở rộng footer bằng các liên kết đang hoạt động và thông tin cửa hàng; không tự bịa thông tin liên hệ/chính sách chưa được cấu hình.
+- [x] Kiểm tra dữ liệu thử nghiệm hiện có trong MariaDB; giữ sản phẩm khớp chính xác vì đang được đơn hàng tham chiếu và không xóa danh mục `Snar` khi vẫn còn sản phẩm sử dụng.
 
 ## P1 — Hoàn thiện trang chủ và nhận diện cửa hàng
 
-- [ ] Thêm thanh thông báo: **Miễn phí vận chuyển đơn từ 500.000 ₫**; chỉ hiển thị điều kiện khi chính sách phí ship đã được xác định.
-- [ ] Thiết kế lại header gồm logo, ô tìm kiếm nổi bật, giỏ hàng có số lượng, tài khoản và điều hướng danh mục.
-- [ ] Xây dựng gợi ý tự động cho ô tìm kiếm; hỗ trợ bàn phím, trạng thái không có gợi ý và truy cập trên mobile.
-- [ ] Thêm menu danh mục/mega menu trên desktop và menu hamburger trên mobile.
-- [ ] Thêm dải danh mục có icon hoặc thẻ, ví dụ: Nhà bếp, Thiết bị thông minh, Máy lạnh.
-- [ ] Thêm dải cam kết: giao hàng nhanh, đổi trả 30 ngày, bảo hành chính hãng, thanh toán an toàn; chỉ quảng bá chính sách cửa hàng thực sự áp dụng.
-- [ ] Tổ chức khu vực sản phẩm thành các nhóm Bán chạy, Mới về và Khuyến mãi.
-- [ ] Bổ sung dữ liệu/hiển thị giá gốc, phần trăm giảm và badge khuyến mãi; không tự tạo giá giảm nếu chưa có dữ liệu chương trình.
-- [ ] Thiết kế banner khuyến mãi/flash sale; chỉ bật đồng hồ đếm ngược khi có thời gian bắt đầu/kết thúc được cấu hình.
+- [x] Thêm thanh thông báo **Miễn phí vận chuyển đơn từ 500.000 ₫**; ngưỡng có thể cấu hình qua `homegear.shipping.free-threshold`.
+- [x] Thiết kế lại header gồm logo, ô tìm kiếm nổi bật, giỏ hàng có số lượng, tài khoản và điều hướng danh mục; không hiển thị email quản trị trên header công khai.
+- [x] Xây dựng gợi ý tự động cho ô tìm kiếm, giới hạn 7 kết quả, thao tác bằng bàn phím và trạng thái rỗng/lỗi.
+- [x] Thêm menu danh mục trên desktop và menu hamburger trên mobile.
+- [x] Thêm dải danh mục dạng thẻ có icon và liên kết lọc theo danh mục.
+- [x] Thêm dải thông tin mua hàng dựa trên tính năng hiện có; chưa quảng bá đổi trả/bảo hành/giao nhanh chưa được xác nhận.
+- [x] Tổ chức sản phẩm thành Bán chạy (từ mặt hàng trong đơn không bị hủy), Mới về (ID mới nhất) và Khuyến mãi đang chạy.
+- [x] Bổ sung giá gốc, thời gian khuyến mãi, phần trăm giảm và badge; dữ liệu khuyến mãi được nhập từ quản trị, không tự sinh giá giảm.
+- [x] Thêm banner/countdown chỉ khi có khuyến mãi đang hoạt động và thời điểm kết thúc hợp lệ.
 - [ ] Thêm đánh giá khách hàng và logo thương hiệu sau khi có dữ liệu/nguồn nội dung phù hợp.
-- [ ] Thêm đăng ký nhận tin; xác thực email và thông báo rõ việc lưu/ sử dụng địa chỉ email.
-- [ ] Hoàn thiện footer 4 cột: giới thiệu, hỗ trợ/chính sách, liên hệ, mạng xã hội và phương thức thanh toán.
-- [ ] Thêm nút liên hệ nổi Zalo/Messenger/hotline khi đã cấu hình đúng thông tin liên hệ.
+- [ ] Thêm đăng ký nhận tin sau khi xác định dịch vụ gửi email và quy trình đồng ý sử dụng dữ liệu.
+- [x] Tạo footer 4 cột và cấu hình các liên kết chính sách, liên hệ, mạng xã hội, phương thức thanh toán qua `application.properties`; mục chưa cấu hình không được hiển thị như thông tin đã xác thực.
+- [x] Thêm nút liên hệ nổi Zalo/Messenger/hotline; mỗi nút chỉ hiển thị khi có thông tin tương ứng.
+- [ ] Điền và xác minh thông tin liên hệ, URL chính sách/mạng xã hội và chỉ bật phương thức thanh toán đang được checkout hỗ trợ.
 
 ## P2 — Trang danh sách và khám phá sản phẩm
 
+- [x] Tách trang chủ `/` khỏi trang catalog `/products`; bộ lọc và danh sách phân trang chỉ hiển thị trong trang sản phẩm riêng.
 - [x] Duy trì trang catalog, tìm kiếm và trang chi tiết sản phẩm hiện có.
-- [ ] Thêm breadcrumb, tổng số kết quả và trạng thái rỗng **Không tìm thấy sản phẩm** kèm gợi ý xóa bộ lọc/đổi từ khóa.
-- [ ] Thêm bộ lọc danh mục, khoảng giá và tình trạng còn hàng.
+- [x] Thêm breadcrumb, tổng số kết quả và trạng thái rỗng **Không tìm thấy sản phẩm** kèm gợi ý xóa bộ lọc/đổi từ khóa.
+- [x] Thêm bộ lọc danh mục, khoảng giá và tình trạng còn hàng.
 - [ ] Thêm bộ lọc thương hiệu sau khi thương hiệu trở thành dữ liệu có quản lý trong hệ thống.
-- [ ] Thêm sắp xếp giá tăng/giảm, mới nhất và bán chạy; xác định nguồn dữ liệu/thứ tự cho tiêu chí bán chạy.
-- [ ] Thêm phân trang hoặc **Xem thêm**, giữ lại trạng thái tìm kiếm/bộ lọc khi chuyển trang.
-- [ ] Nâng cấp thẻ sản phẩm với ảnh, nhãn Mới/giảm giá, đánh giá sao, giá và nút xem nhanh/yêu thích.
-- [ ] Bổ sung ảnh sản phẩm và thuộc tính cần thiết; hiển thị ảnh thay thế khi chưa có ảnh.
-- [ ] Tối ưu truy vấn catalog để lọc/sắp xếp/phân trang ở database, tránh tải toàn bộ dữ liệu lên bộ nhớ khi danh mục lớn.
+- [x] Thêm sắp xếp giá tăng/giảm, mới nhất và bán chạy; bán chạy tính theo số lượng trong đơn không bị hủy.
+- [x] Thêm phân trang và giữ trạng thái tìm kiếm/bộ lọc khi chuyển trang.
+- [x] Nâng cấp thẻ sản phẩm với nhãn Mới/giảm giá, giá, tồn kho và xem nhanh.
+- [ ] Bổ sung đánh giá sao và danh sách yêu thích khi có dữ liệu đánh giá và luồng lưu yêu thích.
+- [x] Thêm trường URL ảnh tùy chọn ở quản trị, lazy-load ảnh và hiển thị ảnh thay thế khi thiếu/lỗi ảnh.
+- [x] Chuyển lọc, sắp xếp, tìm kiếm gợi ý và phân trang catalog sang truy vấn database.
+- [ ] Thêm thương hiệu, đánh giá và quản lý/tải lên nhiều ảnh sản phẩm khi có nguồn dữ liệu và quy trình quản trị phù hợp.
 
 ## P3 — Trang chi tiết sản phẩm
 

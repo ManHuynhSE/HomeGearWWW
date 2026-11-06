@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>iuh.fit</groupId>
-    <artifactId>DemoPrj</artifactId>
+    <artifactId>HomeGearWWW</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>DemoPrj</name>
     <description>DemoPrj</description>

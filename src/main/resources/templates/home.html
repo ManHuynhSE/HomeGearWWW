@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head}"></head>
+<body>
+<header th:replace="~{fragments :: navbar}"></header>
+<main class="container store-home py-4">
+  <section class="hero store-hero position-relative p-4 p-lg-5 mb-4">
+    <div class="hero-orb"></div>
+    <div class="position-relative col-lg-7">
+      <span class="badge text-bg-light text-primary mb-3"><i class="bi bi-stars me-1"></i>Mua sắm thông minh</span>
+      <h1 class="display-5 fw-bold">Thiết bị tốt cho một ngôi nhà tốt hơn.</h1>
+      <p class="lead opacity-75">Khám phá thiết bị gia dụng và giải pháp thông minh cho cuộc sống tiện nghi.</p>
+      <a href="/products" class="btn btn-light text-primary fw-semibold">Khám phá sản phẩm <i class="bi bi-arrow-down ms-1"></i></a>
+    </div>
+    <div class="store-hero-art" aria-hidden="true"><i class="bi bi-house-heart"></i><span class="hero-art-orbit"></span></div>
+  </section>
+
+  <section class="store-benefits mb-5" aria-label="Thông tin mua sắm">
+    <div><span class="benefit-icon"><i class="bi bi-search"></i></span><span><strong>Dễ dàng tìm kiếm</strong><small>Tra cứu theo tên sản phẩm</small></span></div>
+    <div><span class="benefit-icon"><i class="bi bi-box-seam"></i></span><span><strong>Tồn kho rõ ràng</strong><small>Kiểm tra trước khi đặt hàng</small></span></div>
+    <div><span class="benefit-icon"><i class="bi bi-bag-check"></i></span><span><strong>Đặt hàng trực tuyến</strong><small>Thao tác thuận tiện</small></span></div>
+    <div><span class="benefit-icon"><i class="bi bi-receipt"></i></span><span><strong>Theo dõi đơn hàng</strong><small>Lưu lịch sử trong tài khoản</small></span></div>
+  </section>
+
+  <section th:if="${!#lists.isEmpty(storeCategories)}" class="store-category-section mb-5">
+    <div class="store-section-heading">
+      <div><p class="store-eyebrow">KHÁM PHÁ</p><h2>Danh mục sản phẩm</h2></div>
+      <a href="/products">Tất cả sản phẩm <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="store-category-grid">
+      <a class="store-category-card" th:each="category : ${storeCategories}" th:href="@{/products(categoryId=${category.id})}">
+        <span class="store-category-icon"><i class="bi" th:classappend="${#strings.containsIgnoreCase(category.name, 'bếp') ? ' bi-cup-hot' : (#strings.containsIgnoreCase(category.name, 'thông minh') ? ' bi-cpu' : (#strings.containsIgnoreCase(category.name, 'lạnh') ? ' bi-snow' : ' bi-house-gear'))}"></i></span>
+        <span th:text="${category.name}"></span><i class="bi bi-arrow-up-right store-category-arrow"></i>
+      </a>
+    </div>
+  </section>
+
+  <section th:if="${flashSaleProduct != null}" class="store-flash-sale mb-5" th:data-countdown="${flashSaleProduct.promotionEndsAt}">
+    <div class="flash-sale-copy">
+      <p class="store-eyebrow">ƯU ĐÃI ĐANG DIỄN RA</p>
+      <h2>Giá tốt trong thời gian giới hạn</h2>
+      <p class="mb-0">Ưu đãi được cấu hình cho sản phẩm <strong th:text="${flashSaleProduct.name}"></strong>.</p>
+    </div>
+    <div class="flash-sale-timer"><span>Kết thúc sau</span><strong data-countdown-output>--:--:--</strong></div>
+    <a class="btn btn-light fw-semibold" th:href="@{/products/{id}(id=${flashSaleProduct.id})}">Xem ưu đãi <i class="bi bi-arrow-right ms-1"></i></a>
+  </section>
+
+  <section th:if="${!#lists.isEmpty(promotionProducts)}" class="store-product-section mb-5">
+    <div class="store-section-heading"><div><p class="store-eyebrow">GIÁ TỐT</p><h2>Đang khuyến mãi</h2></div></div>
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-4" th:each="product : ${promotionProducts}">
+        <div th:replace="~{fragments :: productCard(${product})}"></div>
+      </div>
+    </div>
+  </section>
+
+  <section th:if="${!#lists.isEmpty(bestSellingProducts)}" class="store-product-section mb-5">
+    <div class="store-section-heading"><div><p class="store-eyebrow">ĐƯỢC QUAN TÂM</p><h2>Sản phẩm bán chạy</h2></div></div>
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-4" th:each="product : ${bestSellingProducts}">
+        <div th:replace="~{fragments :: productCard(${product})}"></div>
+      </div>
+    </div>
+  </section>
+
+  <section th:if="${!#lists.isEmpty(newArrivals)}" class="store-product-section mb-5">
+    <div class="store-section-heading"><div><p class="store-eyebrow">VỪA CẬP NHẬT</p><h2>Sản phẩm mới về</h2></div></div>
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-4" th:each="product : ${newArrivals}">
+        <div th:replace="~{fragments :: productCard(${product})}"></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div th:replace="~{fragments :: productQuickViewModal}"></div>
+<footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>
