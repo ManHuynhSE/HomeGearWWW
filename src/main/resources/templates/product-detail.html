@@ -1,29 +1,214 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head}"></head><body>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head}"></head>
+<body>
 <header th:replace="~{fragments :: navbar}"></header>
-<main class="container py-5">
-  <a href="/products" class="text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Quay lại sản phẩm</a>
-  <div class="row g-5 align-items-center mt-2">
-    <div class="col-md-5"><div class="product-visual rounded-4 shadow-sm"><i class="bi bi-house-gear"></i></div></div>
-    <div class="col-md-7">
+<main class="container product-detail-page py-4 py-lg-5">
+  <nav aria-label="Điều hướng đường dẫn" class="mb-4">
+    <ol class="breadcrumb store-breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+      <li class="breadcrumb-item"><a href="/products">Sản phẩm</a></li>
+      <li class="breadcrumb-item"><a th:href="@{/products(categoryId=${product.category.id})}" th:text="${product.category.name}"></a></li>
+      <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}"></li>
+    </ol>
+  </nav>
+
+  <div th:if="${cartSuccess}" class="alert alert-success" role="status" th:text="${cartSuccess}"></div>
+  <div th:if="${cartError}" class="alert alert-warning" role="alert" th:text="${cartError}"></div>
+
+  <section class="row g-4 g-lg-5 align-items-start">
+    <div class="col-lg-6">
+      <div class="product-gallery">
+        <div class="product-gallery-stage">
+          <button th:if="${!#lists.isEmpty(galleryImages)}" type="button" class="product-gallery-zoom"
+                  data-bs-toggle="modal" data-bs-target="#productImageModal" aria-label="Phóng to ảnh sản phẩm">
+            <img id="product-main-image" th:src="${galleryImages[0].url}" th:alt="${product.name}"
+                 onerror="this.hidden=true; document.getElementById('product-gallery-placeholder').hidden=false">
+            <span class="product-gallery-zoom-icon"><i class="bi bi-arrows-fullscreen"></i></span>
+          </button>
+          <div id="product-gallery-placeholder" class="product-gallery-placeholder"
+               th:hidden="${!#lists.isEmpty(galleryImages)}">
+            <i class="bi bi-house-gear"></i><span>Chưa có hình ảnh sản phẩm</span>
+          </div>
+        </div>
+        <div th:if="${#lists.size(galleryImages) > 1}" class="product-gallery-thumbnails" aria-label="Ảnh sản phẩm">
+          <button th:each="image, iter : ${galleryImages}" type="button" class="product-gallery-thumb"
+                  th:classappend="${iter.first ? ' active' : ''}"
+                  th:attr="data-image-url=${image.url},data-image-alt=${product.name},data-image-attribution=${image.attribution},data-image-source=${image.sourceUrl}"
+                  th:aria-label="|Xem ảnh ${iter.count} của ${product.name}|">
+            <img th:src="${image.url}" th:alt="|Ảnh ${iter.count} của ${product.name}|" loading="lazy">
+          </button>
+        </div>
+        <a id="product-main-credit" th:if="${!#lists.isEmpty(galleryImages) and galleryImages[0].attribution != null and galleryImages[0].sourceUrl != null}"
+           class="product-detail-image-credit d-inline-block mt-2" th:href="${galleryImages[0].sourceUrl}"
+           target="_blank" rel="noopener noreferrer" th:text="${galleryImages[0].attribution}"></a>
+        <a id="product-main-credit" th:if="${#lists.isEmpty(galleryImages)}"
+           class="product-detail-image-credit d-inline-block mt-2" hidden></a>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
       <span class="badge bg-primary-subtle text-primary mb-3" th:text="${product.category.name}"></span>
-      <h1 class="display-6 fw-bold" th:text="${product.name}"></h1>
-      <p class="lead text-secondary" th:text="${product.description}"></p>
-      <div class="product-detail-prices mb-2">
-        <div class="price fs-3" th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' ₫'"></div>
+      <h1 class="product-detail-title" th:text="${product.name}"></h1>
+      <div class="product-detail-summary">
+        <span class="product-detail-sku" th:text="|Mã sản phẩm: ${product.sku}|"></span>
+        <span class="product-detail-rating"><i class="bi bi-star"></i> Chưa có đánh giá</span>
+      </div>
+      <p class="product-detail-description" th:text="${product.description}"></p>
+
+      <div class="product-detail-prices mb-3">
+        <span class="price fs-2" th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' ₫'"></span>
         <del th:if="${promotionActive}" class="text-secondary" th:text="${#numbers.formatDecimal(product.originalPrice, 0, 'POINT', 0, 'POINT')} + ' ₫'"></del>
         <span th:if="${promotionActive}" class="product-promo-badge position-static" th:text="${'-' + product.discountPercent + '%'}"></span>
       </div>
-      <p th:class="${product.stock > 0 ? 'text-secondary' : 'text-danger fw-semibold'}">
-        <i class="bi bi-box-seam me-2"></i><span th:if="${product.stock > 0}">Còn <strong th:text="${product.stock}"></strong> sản phẩm</span><strong th:if="${product.stock <= 0}">Hết hàng</strong>
+
+      <p class="product-detail-stock mb-4" th:classappend="${product.stock > 0 ? ' in-stock' : ' out-of-stock'}">
+        <i class="bi" th:classappend="${product.stock > 0 ? ' bi-check-circle-fill' : ' bi-x-circle-fill'}"></i>
+        <span th:if="${product.stock > 0}" th:text="|Còn ${product.stock} sản phẩm|"></span>
+        <span th:if="${product.stock <= 0}">Hết hàng</span>
       </p>
-      <form th:action="@{/cart/add/{id}(id=${product.id})}" method="post">
+
+      <form th:action="@{/cart/add/{id}(id=${product.id})}" method="post" class="product-detail-buy">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-        <button class="btn btn-lg px-4" th:classappend="${product.stock > 0 ? ' btn-primary' : ' btn-secondary'}" th:disabled="${product.stock <= 0}">
-          <i class="bi me-2" th:classappend="${product.stock > 0 ? ' bi-cart-plus' : ' bi-slash-circle'}"></i><span th:text="${product.stock > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}"></span>
-        </button>
+        <label for="product-quantity">Số lượng</label>
+        <div class="product-detail-actions">
+          <input id="product-quantity" class="form-control" type="number" name="quantity"
+                 min="1" step="1" value="1" th:max="${product.stock}" th:disabled="${product.stock <= 0}">
+          <button class="btn btn-primary" type="submit" name="intent" value="detail" th:disabled="${product.stock <= 0}">
+            <i class="bi bi-cart-plus me-2"></i>Thêm vào giỏ
+          </button>
+          <button class="btn btn-outline-primary" type="submit" name="intent" value="cart" th:disabled="${product.stock <= 0}">
+            <i class="bi bi-bag-check me-2"></i>Mua ngay
+          </button>
+        </div>
       </form>
+
+      <div class="product-detail-delivery mt-4">
+        <p><i class="bi bi-truck"></i><span>Miễn phí vận chuyển theo ngưỡng hiện tại: <strong th:text="${#numbers.formatDecimal(freeShippingThreshold, 0, 'POINT', 0, 'POINT')} + ' ₫'"></strong>.</span></p>
+        <p><i class="bi bi-info-circle"></i><span th:if="${storePolicies['shipping'] != ''}">Chi tiết tại <a th:href="${storePolicies['shipping']}" target="_blank" rel="noopener noreferrer">chính sách vận chuyển</a>.</span><span th:if="${storePolicies['shipping'] == ''}">Chi tiết vận chuyển chưa được cửa hàng cấu hình.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="product-detail-information mt-5">
+    <ul class="nav nav-tabs" id="productInfoTabs" role="tablist">
+      <li class="nav-item" role="presentation"><button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description-panel" type="button" role="tab">Mô tả</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="specifications-tab" data-bs-toggle="tab" data-bs-target="#specifications-panel" type="button" role="tab">Thông số kỹ thuật</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-panel" type="button" role="tab">Đánh giá</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="policies-tab" data-bs-toggle="tab" data-bs-target="#policies-panel" type="button" role="tab">Chính sách</button></li>
+    </ul>
+    <div class="tab-content product-detail-tab-content">
+      <div class="tab-pane fade show active" id="description-panel" role="tabpanel" aria-labelledby="description-tab">
+        <p class="mb-0" th:text="${product.description != null and !product.description.isBlank() ? product.description : 'Chưa có mô tả cho sản phẩm này.'}"></p>
+      </div>
+      <div class="tab-pane fade" id="specifications-panel" role="tabpanel" aria-labelledby="specifications-tab">
+        <p class="text-secondary mb-0">Thông số kỹ thuật chưa được cung cấp cho sản phẩm này.</p>
+      </div>
+      <div class="tab-pane fade" id="reviews-panel" role="tabpanel" aria-labelledby="reviews-tab">
+        <p class="text-secondary mb-0"><i class="bi bi-chat-square-text me-2"></i>Chưa có đánh giá cho sản phẩm này.</p>
+      </div>
+      <div class="tab-pane fade" id="policies-panel" role="tabpanel" aria-labelledby="policies-tab">
+        <div class="product-policy-links">
+          <p>Chính sách vận chuyển:
+            <a th:if="${storePolicies['shipping'] != ''}" th:href="${storePolicies['shipping']}" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>
+            <span th:if="${storePolicies['shipping'] == ''}">chưa được cấu hình.</span>
+          </p>
+          <p>Chính sách bảo hành:
+            <a th:if="${storePolicies['warranty'] != ''}" th:href="${storePolicies['warranty']}" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>
+            <span th:if="${storePolicies['warranty'] == ''}">chưa được cấu hình.</span>
+          </p>
+          <p class="mb-0">Chính sách đổi trả:
+            <a th:if="${storePolicies['returns'] != ''}" th:href="${storePolicies['returns']}" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>
+            <span th:if="${storePolicies['returns'] == ''}">chưa được cấu hình.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section th:if="${!#lists.isEmpty(relatedProducts)}" class="product-related-section mt-5">
+    <div class="store-section-heading mb-3">
+      <div><p class="store-eyebrow">CÙNG DANH MỤC</p><h2>Sản phẩm liên quan</h2></div>
+      <a th:href="@{/products(categoryId=${product.category.id})}">Xem danh mục <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-3" th:each="relatedProduct : ${relatedProducts}">
+        <div th:replace="~{fragments :: productCard(${relatedProduct})}"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal fade" id="productImageModal" tabindex="-1" aria-label="Ảnh sản phẩm phóng to" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content product-image-modal-content">
+      <button type="button" class="btn-close product-image-modal-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      <img id="product-zoom-image" class="product-zoom-image" alt="">
+      <a id="product-zoom-credit" class="product-detail-image-credit p-3" hidden target="_blank" rel="noopener noreferrer"></a>
     </div>
   </div>
-</main>
-<footer th:replace="~{fragments :: footer}"></footer></body></html>
+</div>
+<div th:replace="~{fragments :: productQuickViewModal}"></div>
+
+<script th:if="${product != null}" type="application/ld+json" th:inline="javascript">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": [[${product.name}]],
+  "description": [[${product.description}]],
+  "sku": [[${product.sku}]],
+  "image": [[${product.imageUrl}]],
+  "url": [[${canonicalUrl}]],
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "VND",
+    "price": [[${product.price}]],
+    "availability": [[${product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'}]],
+    "url": [[${canonicalUrl}]]
+  }
+}
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const mainImage = document.getElementById("product-main-image");
+  const credit = document.getElementById("product-main-credit");
+  const placeholder = document.getElementById("product-gallery-placeholder");
+  document.querySelectorAll(".product-gallery-thumb").forEach(button => {
+    button.addEventListener("click", () => {
+      if (!mainImage) return;
+      mainImage.src = button.dataset.imageUrl || "";
+      mainImage.alt = button.dataset.imageAlt || "";
+      mainImage.hidden = false;
+      if (placeholder) placeholder.hidden = true;
+      document.querySelectorAll(".product-gallery-thumb").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+      if (credit) {
+        const attribution = button.dataset.imageAttribution || "";
+        const source = button.dataset.imageSource || "";
+        credit.hidden = !attribution || !source;
+        credit.textContent = attribution;
+        credit.href = source;
+      }
+    });
+  });
+
+  const modal = document.getElementById("productImageModal");
+  if (modal) {
+    modal.addEventListener("show.bs.modal", () => {
+      if (!mainImage) return;
+      const zoomImage = document.getElementById("product-zoom-image");
+      const zoomCredit = document.getElementById("product-zoom-credit");
+      zoomImage.src = mainImage.src;
+      zoomImage.alt = mainImage.alt;
+      zoomCredit.hidden = !credit || credit.hidden;
+      if (!zoomCredit.hidden) {
+        zoomCredit.textContent = credit.textContent;
+        zoomCredit.href = credit.href;
+      }
+    });
+  }
+});
+</script>
+<footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>

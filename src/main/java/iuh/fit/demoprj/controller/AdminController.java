@@ -96,10 +96,13 @@ public class AdminController {
                               @RequestParam int stock,
                               @RequestParam(defaultValue = "") String description,
                               @RequestParam(defaultValue = "") String imageUrl,
+                              @RequestParam(defaultValue = "") String imageAttribution,
+                              @RequestParam(defaultValue = "") String imageSourceUrl,
                               @RequestParam Long categoryId, Model model) {
         try {
             catalog.saveProduct(id, name, price, stock, originalPrice,
-                    promotionStartsAt, promotionEndsAt, description, imageUrl, categoryId);
+                    promotionStartsAt, promotionEndsAt, description, imageUrl,
+                    imageAttribution, imageSourceUrl, categoryId);
             return "redirect:/admin?success=product";
         } catch (IllegalArgumentException ex) {
             return dashboard(id, null, null, null, null, null, null, model.addAttribute("error", ex.getMessage()));

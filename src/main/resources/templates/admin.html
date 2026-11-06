@@ -91,6 +91,8 @@
           <select class="form-select" name="categoryId" required><option value="">Chọn danh mục</option><option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}" th:selected="${editProduct != null and editProduct.category.id == category.id}"></option></select>
           <input class="form-control" name="description" placeholder="Mô tả" th:value="${editProduct != null ? editProduct.description : ''}">
           <input class="form-control" name="imageUrl" placeholder="Đường dẫn ảnh (tùy chọn)" th:value="${editProduct != null ? editProduct.imageUrl : ''}">
+          <input class="form-control" name="imageAttribution" placeholder="Tác giả / giấy phép ảnh" th:value="${editProduct != null ? editProduct.imageAttribution : ''}">
+          <input class="form-control" name="imageSourceUrl" placeholder="Liên kết nguồn ảnh" th:value="${editProduct != null ? editProduct.imageSourceUrl : ''}">
           <input class="form-control" name="originalPrice" type="number" min="0.01" step="0.01" placeholder="Giá gốc (tùy chọn)" th:value="${editProduct != null ? editProduct.originalPrice : ''}">
           <input class="form-control" name="promotionStartsAt" type="datetime-local" aria-label="Thời gian bắt đầu khuyến mãi" th:value="${editProduct != null ? editProduct.promotionStartsAt : ''}">
           <input class="form-control" name="promotionEndsAt" type="datetime-local" aria-label="Thời gian kết thúc khuyến mãi" th:value="${editProduct != null ? editProduct.promotionEndsAt : ''}">

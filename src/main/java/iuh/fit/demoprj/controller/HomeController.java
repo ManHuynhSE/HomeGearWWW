@@ -3,8 +3,10 @@ package iuh.fit.demoprj.controller;
 import iuh.fit.demoprj.service.CatalogService;
 import iuh.fit.demoprj.model.entity.Product;
 import iuh.fit.demoprj.repository.OrderItemRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.IntStream;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.util.List;
 
 @Controller
@@ -90,13 +95,37 @@ public class HomeController {
         if (keyword == null || keyword.trim().length() < 2) return List.of();
         return catalog.searchSuggestions(keyword.trim()).stream()
                 .map(product -> new ProductSuggestion(
-                        product.getId(), product.getName(), product.getPrice(), product.getStock()))
+                        product.getId(), product.getName(), product.getPrice(), product.getStock(),
+                        product.getCanonicalPath()))
                 .toList();
     }
 
     @GetMapping("/products/{id}")
-    public String detail(@PathVariable Long id, Model model) {
-        Product product = catalog.getProduct(id);
+    public String legacyDetail(@PathVariable Long id, Model model, HttpServletRequest request) {
+        return renderProductDetail(catalog.getProductDetail(id), model, request);
+    }
+
+    @GetMapping("/san-pham/{slugAndId}")
+    public String slugDetail(@PathVariable String slugAndId, Model model, HttpServletRequest request) {
+        int separator = slugAndId.lastIndexOf('-');
+        if (separator <= 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        Long id;
+        try {
+            id = Long.parseLong(slugAndId.substring(separator + 1));
+        } catch (NumberFormatException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        Product product = catalog.getProductDetail(id);
+        String canonicalTail = product.getCanonicalPath().substring("/san-pham/".length());
+        if (!slugAndId.equals(canonicalTail)) {
+            return "redirect:" + product.getCanonicalPath();
+        }
+        return renderProductDetail(product, model, request);
+    }
+
+    private String renderProductDetail(Product product, Model model, HttpServletRequest request) {
         LocalDateTime now = LocalDateTime.now();
         model.addAttribute("product", product);
         model.addAttribute("promotionActive", product.getOriginalPrice() != null
@@ -104,6 +133,26 @@ public class HomeController {
                 && !product.getPromotionStartsAt().isAfter(now)
                 && product.getPromotionEndsAt() != null
                 && product.getPromotionEndsAt().isAfter(now));
+        List<ProductGalleryItem> galleryImages = new ArrayList<>();
+        if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
+            galleryImages.add(new ProductGalleryItem(
+                    product.getImageUrl(), product.getImageAttribution(), product.getImageSourceUrl()));
+        }
+        product.getGalleryImages().forEach(image -> galleryImages.add(new ProductGalleryItem(
+                image.getImageUrl(), image.getImageAttribution(), image.getImageSourceUrl())));
+        model.addAttribute("galleryImages", galleryImages);
+        List<Product> relatedProducts = catalog.getRelatedProducts(product);
+        List<Product> arrivals = catalog.getNewArrivals();
+        List<Product> promotions = catalog.getActivePromotions(now);
+        model.addAttribute("relatedProducts", relatedProducts);
+        model.addAttribute("newArrivalIds", arrivals.stream().map(Product::getId).toList());
+        model.addAttribute("activePromotionIds", promotions.stream().map(Product::getId).toList());
+        model.addAttribute("pageTitle", product.getName() + " | HomeGear");
+        String pageDescription = product.getDescription() == null ? "" : product.getDescription().trim();
+        model.addAttribute("pageDescription", pageDescription.length() > 160
+                ? pageDescription.substring(0, 157) + "..." : pageDescription);
+        model.addAttribute("canonicalUrl", ServletUriComponentsBuilder.fromContextPath(request)
+                .path(product.getCanonicalPath()).toUriString());
         return "product-detail";
     }
 
@@ -112,7 +161,10 @@ public class HomeController {
         return "login";
     }
 
-    public record ProductSuggestion(Long id, String name, BigDecimal price, int stock) {
+    public record ProductSuggestion(Long id, String name, BigDecimal price, int stock, String url) {
+    }
+
+    public record ProductGalleryItem(String url, String attribution, String sourceUrl) {
     }
 
     private List<Integer> pageNumbers(Page<?> page) {

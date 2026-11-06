@@ -41,20 +41,21 @@
 - [x] Nâng cấp thẻ sản phẩm với nhãn Mới/giảm giá, giá, tồn kho và xem nhanh.
 - [ ] Bổ sung đánh giá sao và danh sách yêu thích khi có dữ liệu đánh giá và luồng lưu yêu thích.
 - [x] Thêm trường URL ảnh tùy chọn ở quản trị, lazy-load ảnh và hiển thị ảnh thay thế khi thiếu/lỗi ảnh.
+- [x] Mở rộng SQL seed lên 30 sản phẩm/7 danh mục với ảnh Wikimedia Commons, liên kết nguồn và ghi công giấy phép; chỉ điền ảnh cho sản phẩm seed cũ khi chưa có ảnh.
 - [x] Chuyển lọc, sắp xếp, tìm kiếm gợi ý và phân trang catalog sang truy vấn database.
 - [ ] Thêm thương hiệu, đánh giá và quản lý/tải lên nhiều ảnh sản phẩm khi có nguồn dữ liệu và quy trình quản trị phù hợp.
 
 ## P3 — Trang chi tiết sản phẩm
 
 - [x] Có template và luồng trang chi tiết sản phẩm cơ bản.
-- [ ] Bổ sung gallery ảnh chính và ảnh thu nhỏ; hỗ trợ phóng to/xem ảnh trên mobile.
-- [ ] Hiển thị tên, SKU, đánh giá, giá hiện tại, giá gốc và phần trăm giảm khi có dữ liệu tương ứng.
-- [ ] Bổ sung chọn số lượng, trạng thái tồn kho chính xác, nút **Thêm vào giỏ** và **Mua ngay**.
-- [ ] Vô hiệu hóa thao tác mua khi hết hàng; kiểm tra lại tồn kho ở backend lúc checkout.
-- [ ] Tổ chức nội dung thành tab Mô tả, Thông số kỹ thuật, Đánh giá và Chính sách.
-- [ ] Hiển thị sản phẩm liên quan, thông tin vận chuyển và bảo hành đã được cửa hàng xác nhận.
-- [ ] Cập nhật title, meta description và dữ liệu có cấu trúc Product cho từng sản phẩm.
-- [ ] Tạo URL thân thiện theo slug; bảo đảm URL cũ vẫn được xử lý/chuyển hướng nếu đang được sử dụng.
+- [x] Bổ sung gallery ảnh chính/ảnh thu nhỏ, phóng to và hiển thị ghi công từng ảnh; nhiều ảnh phụ có thể được nạp qua bảng `product_images`.
+- [x] Hiển thị tên, mã sản phẩm nội bộ, trạng thái đánh giá, giá hiện tại, giá gốc và phần trăm giảm khi có dữ liệu tương ứng; không tạo đánh giá giả.
+- [x] Bổ sung chọn số lượng, trạng thái tồn kho chính xác, nút **Thêm vào giỏ** và **Mua ngay**; “Mua ngay” thêm vào giỏ rồi mở giỏ hàng.
+- [x] Vô hiệu hóa thao tác mua khi hết hàng; kiểm tra số lượng khi thêm giỏ và kiểm tra lại tồn kho lúc tạo đơn.
+- [x] Tổ chức nội dung thành tab Mô tả, Thông số kỹ thuật, Đánh giá và Chính sách; hiển thị trạng thái chưa có dữ liệu khi chưa cấu hình.
+- [x] Hiển thị sản phẩm liên quan, ngưỡng miễn phí vận chuyển hiện được cấu hình và liên kết chính sách chỉ khi đã cung cấp.
+- [x] Cập nhật title, meta description, canonical URL và dữ liệu có cấu trúc Product cho từng sản phẩm.
+- [x] Tạo URL thân thiện theo slug; URL `/products/{id}` cũ vẫn hoạt động và trỏ canonical sang URL mới.
 
 ## P4 — Giỏ hàng, checkout và sau đặt hàng
 

@@ -18,6 +18,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Product> findForCheckoutById(Long id);
 
+    @Query("""
+            select distinct product
+            from Product product
+            left join fetch product.galleryImages
+            where product.id = :id
+            """)
+    Optional<Product> findDetailById(@Param("id") Long id);
+
+    List<Product> findTop4ByCategory_IdAndIdNotOrderByIdDesc(Long categoryId, Long id);
     List<Product> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String name, String description);
     List<Product> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
             String name, String description, Pageable pageable);

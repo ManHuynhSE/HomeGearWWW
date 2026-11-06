@@ -3,7 +3,11 @@ package iuh.fit.demoprj.model.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 @Entity
 @Table(name = "products")
@@ -34,9 +38,19 @@ public class Product {
     @Column(length = 1000)
     private String imageUrl;
 
+    @Column(length = 255)
+    private String imageAttribution;
+
+    @Column(length = 1000)
+    private String imageSourceUrl;
+
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    private List<ProductImage> galleryImages = new ArrayList<>();
 
     protected Product() {
     }
@@ -63,7 +77,28 @@ public class Product {
     public int getStock() { return stock; }
     public String getDescription() { return description; }
     public String getImageUrl() { return imageUrl; }
+    public String getImageAttribution() { return imageAttribution; }
+    public String getImageSourceUrl() { return imageSourceUrl; }
     public Category getCategory() { return category; }
+    public List<ProductImage> getGalleryImages() { return galleryImages; }
+    public String getSku() {
+        return id == null ? "" : String.format(Locale.ROOT, "HG-%06d", id);
+    }
+    public String getSlug() {
+        String normalized = Normalizer.normalize(name.replace('đ', 'd').replace('Đ', 'D'), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+        return normalized.isBlank() ? "san-pham" : normalized;
+    }
+    public String getCanonicalPath() {
+        return id == null ? "/products" : "/san-pham/" + getSlug() + "-" + id;
+    }
+    public void addGalleryImage(ProductImage image) {
+        image.setProduct(this);
+        galleryImages.add(image);
+    }
     public void setName(String name) { this.name = name; }
     public void setPrice(BigDecimal price) { this.price = price; }
     public void setOriginalPrice(BigDecimal originalPrice) { this.originalPrice = originalPrice; }
@@ -72,6 +107,8 @@ public class Product {
     public void setStock(int stock) { this.stock = stock; }
     public void setDescription(String description) { this.description = description; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public void setImageAttribution(String imageAttribution) { this.imageAttribution = imageAttribution; }
+    public void setImageSourceUrl(String imageSourceUrl) { this.imageSourceUrl = imageSourceUrl; }
     public void setCategory(Category category) { this.category = category; }
 }
 

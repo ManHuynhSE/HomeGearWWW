@@ -78,6 +78,16 @@ public class CatalogService {
         return products.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm."));
     }
 
+    public Product getProductDetail(Long id) {
+        return products.findDetailById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm."));
+    }
+
+    public List<Product> getRelatedProducts(Product product) {
+        return products.findTop4ByCategory_IdAndIdNotOrderByIdDesc(
+                product.getCategory().getId(), product.getId());
+    }
+
     public List<Category> getCategories() {
         return categories.findAll();
     }
@@ -117,7 +127,8 @@ public class CatalogService {
     public Product saveProduct(Long id, String name, java.math.BigDecimal price, int stock,
                                java.math.BigDecimal originalPrice, LocalDateTime promotionStartsAt,
                                LocalDateTime promotionEndsAt, String description,
-                               String imageUrl, Long categoryId) {
+                               String imageUrl, String imageAttribution, String imageSourceUrl,
+                               Long categoryId) {
         String normalizedName = name == null ? "" : name.trim();
         if (normalizedName.isBlank() || price == null || price.signum() <= 0 || stock < 0) {
             throw new IllegalArgumentException("Tên bắt buộc; giá phải lớn hơn 0; tồn kho không được âm.");
@@ -145,6 +156,14 @@ public class CatalogService {
         product.setStock(stock);
         product.setDescription(description == null ? "" : description.trim());
         product.setImageUrl(normalizeImageUrl(imageUrl));
+        String normalizedAttribution = imageAttribution == null || imageAttribution.isBlank()
+                ? null : imageAttribution.trim();
+        String normalizedImageSourceUrl = normalizeImageUrl(imageSourceUrl);
+        if (normalizedAttribution != null && normalizedImageSourceUrl == null) {
+            throw new IllegalArgumentException("Nguồn ghi công ảnh cần có URL nguồn.");
+        }
+        product.setImageAttribution(normalizedAttribution);
+        product.setImageSourceUrl(normalizedImageSourceUrl);
         product.setCategory(category);
         return products.save(product);
     }

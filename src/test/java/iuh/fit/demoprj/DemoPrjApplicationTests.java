@@ -69,15 +69,29 @@ class DemoPrjApplicationTests {
         assertTrue(response.body().contains("store-search-input"));
         assertTrue(response.body().contains("Lọc sản phẩm"));
 
-        Matcher productLink = Pattern.compile("href=\"/products/(\\d+)\"").matcher(response.body());
+        Matcher productLink = Pattern.compile("href=\"(/san-pham/[a-z0-9-]+)\"").matcher(response.body());
         if (productLink.find()) {
-            HttpRequest detailRequest = HttpRequest.newBuilder(
-                    URI.create("http://localhost:" + port + "/products/" + productLink.group(1)))
+            HttpRequest detailRequest = HttpRequest.newBuilder(URI.create(
+                    "http://localhost:" + port + productLink.group(1)))
                     .GET()
                     .build();
             HttpResponse<String> detailResponse = HttpClient.newHttpClient()
                     .send(detailRequest, HttpResponse.BodyHandlers.ofString());
             assertEquals(200, detailResponse.statusCode());
+            assertTrue(detailResponse.body().contains("Mã sản phẩm: HG-"));
+            assertTrue(detailResponse.body().contains("Thông số kỹ thuật"));
+            assertTrue(detailResponse.body().contains("Chưa có đánh giá"));
+            assertTrue(detailResponse.body().contains("application/ld+json"));
+            assertTrue(detailResponse.body().contains("product-quantity"));
+            assertTrue(detailResponse.body().contains("rel=\"canonical\""));
+
+            String productId = productLink.group(1).substring(productLink.group(1).lastIndexOf('-') + 1);
+            HttpRequest legacyRequest = HttpRequest.newBuilder(
+                    URI.create("http://localhost:" + port + "/products/" + productId))
+                    .GET()
+                    .build();
+            assertEquals(200, HttpClient.newHttpClient()
+                    .send(legacyRequest, HttpResponse.BodyHandlers.ofString()).statusCode());
         }
 
         Matcher categoryLink = Pattern.compile("href=\"/products\\?categoryId=(\\d+)\"")
@@ -102,5 +116,6 @@ class DemoPrjApplicationTests {
         assertEquals(200, suggestionsResponse.statusCode());
         assertTrue(suggestionsResponse.headers().firstValue("Content-Type").orElse("")
                 .contains("application/json"));
+        assertTrue(suggestionsResponse.body().contains("\"url\":\"/san-pham/"));
     }
 }

@@ -42,7 +42,7 @@
       <p class="mb-0">Ưu đãi được cấu hình cho sản phẩm <strong th:text="${flashSaleProduct.name}"></strong>.</p>
     </div>
     <div class="flash-sale-timer"><span>Kết thúc sau</span><strong data-countdown-output>--:--:--</strong></div>
-    <a class="btn btn-light fw-semibold" th:href="@{/products/{id}(id=${flashSaleProduct.id})}">Xem ưu đãi <i class="bi bi-arrow-right ms-1"></i></a>
+    <a class="btn btn-light fw-semibold" th:href="${flashSaleProduct.canonicalPath}">Xem ưu đãi <i class="bi bi-arrow-right ms-1"></i></a>
   </section>
 
   <section th:if="${!#lists.isEmpty(promotionProducts)}" class="store-product-section mb-5">
