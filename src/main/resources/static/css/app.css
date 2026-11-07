@@ -168,11 +168,39 @@ body {
 .product-detail-information .nav-link { padding: 16px 13px; color: #64748b; font-weight: 700; }
 .product-detail-information .nav-link.active { color: var(--brand-dark); }
 .product-detail-tab-content { padding: 22px 2px 2px; color: #536176; line-height: 1.75; }
+.product-specification-table th { width: 40%; color: #64748b; font-weight: 650; }
+.product-specification-table td { color: #263248; }
 .product-policy-links p { margin: 0 0 10px; }
 .product-policy-links a { color: var(--brand-dark); font-weight: 650; }
 .product-image-modal-content { position: relative; align-items: center; background: #fff; }
 .product-image-modal-close { position: absolute; z-index: 1; top: 14px; right: 14px; padding: 12px; background-color: #fff; opacity: .9; }
 .product-zoom-image { width: 100%; max-height: 82vh; object-fit: contain; }
+.cart-page, .checkout-page { color: #263248; }
+.cart-table th { padding: 14px 16px; color: #657187; font-size: .82rem; white-space: nowrap; }
+.cart-table td { padding: 16px; }
+.cart-product-name { color: #263248; font-weight: 750; text-decoration: none; }
+.cart-product-name:hover { color: var(--brand); }
+.cart-quantity-form { display: flex; gap: 7px; min-width: 128px; }
+.cart-quantity-form input { width: 78px; }
+.cart-summary-card, .checkout-summary-card { position: sticky; top: 150px; }
+.cart-summary-row, .cart-summary-total { display: flex; justify-content: space-between; gap: 14px; padding: 11px 0; color: #64748b; }
+.cart-summary-row strong { color: #334155; white-space: nowrap; }
+.cart-shipping-hint { margin: 4px 0 12px; color: #718096; font-size: .8rem; }
+.cart-summary-total { margin-top: 6px; border-top: 1px solid #e8edf4; color: #263248; font-weight: 750; }
+.cart-summary-total strong { font-size: 1.15rem; }
+.checkout-option { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 14px; border: 1px solid #e3eaf2; border-radius: 10px; }
+.checkout-option > div, .checkout-payment-option span { display: grid; gap: 3px; }
+.checkout-option small, .checkout-payment-option small { color: #788599; font-size: .8rem; }
+.checkout-payment-option { align-items: center; justify-content: flex-start; cursor: default; }
+.checkout-items { display: grid; gap: 12px; }
+.checkout-item { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #edf0f5; }
+.checkout-item div { display: grid; gap: 4px; }
+.checkout-item small { color: #788599; }
+.checkout-success-page { display: grid; min-height: 52vh; place-items: center; }
+.checkout-success-card { width: min(100%, 620px); border: 1px solid #e8edf4; border-radius: 20px; background: #fff; box-shadow: 0 1rem 2rem rgba(15,23,42,.06); }
+.checkout-success-icon { display: grid; width: 72px; height: 72px; margin: auto; place-items: center; border-radius: 50%; background: #e7f7ef; color: #16835d; font-size: 2rem; }
+.checkout-success-order, .checkout-success-total { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid #edf0f5; text-align: left; }
+.checkout-success-order strong, .checkout-success-total strong { text-align: right; }
 @media (max-width: 575.98px) {
     .product-gallery-stage, .product-gallery-zoom { min-height: 270px; }
     .product-gallery-zoom img { height: 300px; }
@@ -180,6 +208,8 @@ body {
     .product-detail-information .nav-tabs { margin-right: -14px; margin-left: -14px; overflow-x: auto; flex-wrap: nowrap; }
     .product-detail-information .nav-link { padding: 13px 10px; white-space: nowrap; font-size: .85rem; }
     .product-detail-actions .btn { flex: 1 1 100%; }
+    .cart-summary-card, .checkout-summary-card { position: static; }
+    .cart-table { min-width: 690px; }
 }
 .store-clear-filter { padding: 8px 11px; border: 1px solid #dfe6f0; border-radius: 8px; color: #657187 !important; }
 .store-breadcrumb { color: #748197; font-size: .82rem; }
@@ -381,6 +411,8 @@ body.admin-page {
 .product-search { grid-template-columns: minmax(180px, 1fr) auto; max-width: 540px; }
 .admin-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 8px; }
 .admin-form-grid > .btn, .admin-form-grid > a { grid-column: auto; }
+.admin-form-wide { grid-column: 1 / -1; }
+.admin-form-grid textarea.admin-form-wide { min-height: 110px; resize: vertical; }
 .admin-section-grid { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: start; }
 .admin-inline-form { display: flex; gap: 8px; margin-bottom: 15px; }
 .admin-inline-form .form-control { flex: 1; }

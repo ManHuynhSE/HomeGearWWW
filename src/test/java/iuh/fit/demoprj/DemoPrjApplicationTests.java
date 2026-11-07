@@ -38,6 +38,22 @@ class DemoPrjApplicationTests {
     }
 
     @Test
+    void cartIsPublicButCheckoutRequiresAnAccount() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> cartResponse = client.send(
+                HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/cart")).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, cartResponse.statusCode());
+        assertTrue(cartResponse.body().contains("Giỏ hàng đang trống"));
+
+        HttpResponse<String> checkoutResponse = client.send(
+                HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/checkout")).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(302, checkoutResponse.statusCode());
+        assertTrue(checkoutResponse.headers().firstValue("Location").orElse("").contains("/login"));
+    }
+
+    @Test
     void catalogFiltersSortAndPaginationRender() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         for (String path : new String[] {

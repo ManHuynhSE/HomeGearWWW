@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head}"></head>
+<body>
+<header th:replace="~{fragments :: navbar}"></header>
+<main class="container checkout-success-page py-5">
+  <section class="checkout-success-card mx-auto p-4 p-md-5 text-center">
+    <div class="checkout-success-icon"><i class="bi bi-check-lg"></i></div>
+    <p class="store-eyebrow mt-4 mb-2">HOMEGEAR</p>
+    <h1 class="h2 fw-bold">Đặt hàng thành công</h1>
+    <p class="text-secondary">Cảm ơn bạn đã mua sắm. Đơn hàng đã được ghi nhận với phương thức thanh toán khi nhận hàng.</p>
+    <div class="checkout-success-order">Mã đơn hàng <strong th:text="'#' + ${order.id}"></strong></div>
+    <div class="checkout-success-total">Tổng thanh toán
+      <strong class="price" th:text="${#numbers.formatDecimal(order.total, 0, 'POINT', 0, 'POINT')} + ' ₫'"></strong>
+    </div>
+    <p class="small text-secondary mt-3">Đơn hàng được lưu trong tài khoản của bạn. Email xác nhận chưa được gửi vì hệ thống email chưa cấu hình.</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+      <a class="btn btn-primary" href="/orders">Xem đơn hàng</a>
+      <a class="btn btn-outline-primary" href="/products">Tiếp tục mua sắm</a>
+    </div>
+  </section>
+</main>
+<footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>

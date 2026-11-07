@@ -57,7 +57,12 @@ public class AdminController {
         model.addAttribute("customerKeyword", customerKeyword == null ? "" : customerKeyword);
         model.addAttribute("orderKeyword", orderKeyword == null ? "" : orderKeyword);
         model.addAttribute("orderStatus", orderStatus == null ? "" : orderStatus);
-        if (editProduct != null) model.addAttribute("editProduct", catalog.getProduct(editProduct));
+        if (editProduct != null) {
+            model.addAttribute("editProduct", catalog.getProduct(editProduct));
+            model.addAttribute("productSpecificationsText", catalog.getProductSpecificationsText(editProduct));
+        } else {
+            model.addAttribute("productSpecificationsText", "");
+        }
         if (editCategory != null) model.addAttribute("editCategory", catalog.getCategory(editCategory));
         if (editCustomer != null) model.addAttribute("editCustomer", admin.getCustomer(editCustomer));
         return "admin";
@@ -98,14 +103,18 @@ public class AdminController {
                               @RequestParam(defaultValue = "") String imageUrl,
                               @RequestParam(defaultValue = "") String imageAttribution,
                               @RequestParam(defaultValue = "") String imageSourceUrl,
+                              @RequestParam(defaultValue = "") String specificationText,
                               @RequestParam Long categoryId, Model model) {
         try {
             catalog.saveProduct(id, name, price, stock, originalPrice,
                     promotionStartsAt, promotionEndsAt, description, imageUrl,
-                    imageAttribution, imageSourceUrl, categoryId);
+                    imageAttribution, imageSourceUrl, specificationText, categoryId);
             return "redirect:/admin?success=product";
         } catch (IllegalArgumentException ex) {
-            return dashboard(id, null, null, null, null, null, null, model.addAttribute("error", ex.getMessage()));
+            String page = dashboard(id, null, null, null, null, null, null,
+                    model.addAttribute("error", ex.getMessage()));
+            model.addAttribute("productSpecificationsText", specificationText);
+            return page;
         }
     }
 

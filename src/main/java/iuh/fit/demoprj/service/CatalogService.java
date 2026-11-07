@@ -8,6 +8,11 @@ import java.util.List;
 import java.time.LocalDateTime;
 import java.net.URI;
 import java.math.BigDecimal;
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -78,9 +83,20 @@ public class CatalogService {
         return products.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm."));
     }
 
+    @Transactional(readOnly = true)
     public Product getProductDetail(Long id) {
-        return products.findDetailById(id)
+        Product product = products.findDetailById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm."));
+        product.getSpecifications().size();
+        return product;
+    }
+
+    @Transactional(readOnly = true)
+    public String getProductSpecificationsText(Long id) {
+        return getProduct(id).getSpecifications().stream()
+                .map(specification -> specification.getLabel() + " | " + specification.getValue()
+                        + " | " + (specification.getUnit() == null ? "" : specification.getUnit()))
+                .collect(java.util.stream.Collectors.joining("\n"));
     }
 
     public List<Product> getRelatedProducts(Product product) {
@@ -128,11 +144,12 @@ public class CatalogService {
                                java.math.BigDecimal originalPrice, LocalDateTime promotionStartsAt,
                                LocalDateTime promotionEndsAt, String description,
                                String imageUrl, String imageAttribution, String imageSourceUrl,
-                               Long categoryId) {
+                               String specificationText, Long categoryId) {
         String normalizedName = name == null ? "" : name.trim();
         if (normalizedName.isBlank() || price == null || price.signum() <= 0 || stock < 0) {
             throw new IllegalArgumentException("Tên bắt buộc; giá phải lớn hơn 0; tồn kho không được âm.");
         }
+        List<ProductSpecification> specifications = parseSpecifications(specificationText);
         if (originalPrice == null && (promotionStartsAt != null || promotionEndsAt != null)
                 || originalPrice != null && (originalPrice.compareTo(price) <= 0
                 || promotionStartsAt == null || promotionEndsAt == null
@@ -164,8 +181,49 @@ public class CatalogService {
         }
         product.setImageAttribution(normalizedAttribution);
         product.setImageSourceUrl(normalizedImageSourceUrl);
+        product.setSpecifications(specifications);
         product.setCategory(category);
         return products.save(product);
+    }
+
+    private List<ProductSpecification> parseSpecifications(String text) {
+        List<ProductSpecification> specifications = new ArrayList<>();
+        Set<String> keys = new HashSet<>();
+        if (text == null || text.isBlank()) return specifications;
+        String[] lines = text.split("\\R");
+        if (lines.length > 30) {
+            throw new IllegalArgumentException("Mỗi sản phẩm nhập tối đa 30 thông số.");
+        }
+        for (int index = 0; index < lines.length; index++) {
+            String line = lines[index].trim();
+            if (line.isEmpty()) continue;
+            String[] fields = line.split("\\|", -1);
+            if (fields.length != 3) {
+                throw new IllegalArgumentException("Dòng " + (index + 1)
+                        + " cần đúng định dạng: Tên | Giá trị | Đơn vị.");
+            }
+            String label = fields[0].trim();
+            String value = fields[1].trim();
+            String unit = fields[2].trim();
+            if (label.isBlank() || value.isBlank() || label.length() > 100
+                    || value.length() > 200 || unit.length() > 40) {
+                throw new IllegalArgumentException("Dòng " + (index + 1)
+                        + " có tên/giá trị trống hoặc vượt giới hạn ký tự.");
+            }
+            String key = Normalizer.normalize(label.replace('đ', 'd').replace('Đ', 'D'),
+                            Normalizer.Form.NFD)
+                    .replaceAll("\\p{M}+", "")
+                    .toLowerCase(Locale.ROOT)
+                    .replaceAll("[^a-z0-9]+", "-")
+                    .replaceAll("(^-|-$)", "");
+            if (key.isBlank() || !keys.add(key)) {
+                throw new IllegalArgumentException("Tên thông số bị trùng hoặc không hợp lệ ở dòng "
+                        + (index + 1) + ".");
+            }
+            specifications.add(new ProductSpecification(
+                    key, label, value, unit.isBlank() ? null : unit, specifications.size()));
+        }
+        return specifications;
     }
 
     private String normalizeImageUrl(String imageUrl) {

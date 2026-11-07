@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head}"></head>
+<body>
+<header th:replace="~{fragments :: navbar}"></header>
+<main class="container checkout-page py-4 py-lg-5">
+  <nav aria-label="Điều hướng checkout" class="mb-4">
+    <ol class="breadcrumb store-breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+      <li class="breadcrumb-item"><a href="/cart">Giỏ hàng</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Thanh toán</li>
+    </ol>
+  </nav>
+  <div class="mb-4"><p class="store-eyebrow mb-1">HOÀN TẤT ĐƠN HÀNG</p><h1 class="fw-bold">Thông tin giao hàng</h1></div>
+  <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+  <div class="row g-4 align-items-start">
+    <section class="col-lg-7">
+      <form class="card border-0 shadow-sm rounded-4 p-4 p-md-5" method="post" action="/checkout">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <input type="hidden" name="checkoutToken" th:value="${checkoutToken}">
+        <h2 class="h5 fw-bold mb-4"><i class="bi bi-geo-alt text-primary me-2"></i>Địa chỉ nhận hàng</h2>
+        <label class="form-label" for="recipientName">Họ tên người nhận</label>
+        <input id="recipientName" class="form-control mb-3" name="recipientName" maxlength="120"
+               autocomplete="name" required th:value="${recipientName}">
+        <label class="form-label" for="recipientPhone">Số điện thoại</label>
+        <input id="recipientPhone" class="form-control mb-3" name="recipientPhone" type="tel"
+               autocomplete="tel" inputmode="tel" maxlength="32" placeholder="Ví dụ: 0912345678"
+               pattern="(0|\+84)[0-9 ()\-.]{9,16}" required th:value="${recipientPhone}">
+        <label class="form-label" for="shippingAddress">Địa chỉ chi tiết</label>
+        <textarea id="shippingAddress" class="form-control mb-4" name="shippingAddress" rows="3"
+                  maxlength="500" autocomplete="street-address"
+                  placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                  required th:text="${shippingAddress}"></textarea>
+
+        <h2 class="h5 fw-bold mb-3"><i class="bi bi-truck text-primary me-2"></i>Vận chuyển</h2>
+        <div class="checkout-option mb-4">
+          <div><strong>Giao hàng tiêu chuẩn</strong><small>Phí được tính theo tạm tính và ngưỡng miễn phí hiện tại.</small></div>
+          <strong th:if="${shippingFee.signum() > 0}" th:text="${#numbers.formatDecimal(shippingFee, 0, 'POINT', 0, 'POINT')} + ' ₫'"></strong>
+          <strong th:if="${shippingFee.signum() == 0}" class="text-success">Miễn phí</strong>
+        </div>
+
+        <h2 class="h5 fw-bold mb-3"><i class="bi bi-credit-card text-primary me-2"></i>Thanh toán</h2>
+        <label th:if="${codEnabled}" class="checkout-option checkout-payment-option mb-4">
+          <input type="radio" name="paymentMethodDisplay" value="COD" checked disabled>
+          <span><strong>Thanh toán khi nhận hàng (COD)</strong><small>Thanh toán trực tiếp khi nhận đơn hàng.</small></span>
+        </label>
+        <p th:if="${!codEnabled}" class="alert alert-warning">Chưa có phương thức thanh toán khả dụng. Vui lòng liên hệ cửa hàng.</p>
+
+        <button class="btn btn-primary btn-lg w-100" type="submit" th:disabled="${!codEnabled}">
+          <i class="bi bi-bag-check me-2"></i>Xác nhận đặt hàng
+        </button>
+        <a class="btn btn-link mt-2" href="/cart"><i class="bi bi-arrow-left me-1"></i>Quay lại giỏ hàng</a>
+      </form>
+    </section>
+    <aside class="col-lg-5">
+      <div class="card checkout-summary-card border-0 shadow-sm rounded-4 p-4">
+        <h2 class="h5 fw-bold mb-3">Đơn hàng của bạn</h2>
+        <div class="checkout-items">
+          <div class="checkout-item" th:each="line : ${cartLines}">
+            <div><strong th:text="${line.product.name}"></strong><small th:text="|Số lượng: ${line.quantity}|"></small></div>
+            <strong class="text-nowrap" th:text="${#numbers.formatDecimal(line.lineTotal, 0, 'POINT', 0, 'POINT')} + ' ₫'"></strong>
+          </div>
+        </div>
+        <div class="cart-summary-row mt-3"><span>Tạm tính</span><strong th:text="${#numbers.formatDecimal(subtotal, 0, 'POINT', 0, 'POINT')} + ' ₫'"></strong></div>
+        <div class="cart-summary-row"><span>Vận chuyển</span><strong th:if="${shippingFee.signum() > 0}" th:text="${#numbers.formatDecimal(shippingFee, 0, 'POINT', 0, 'POINT')} + ' ₫'"></strong><strong th:if="${shippingFee.signum() == 0}" class="text-success">Miễn phí</strong></div>
+        <div class="cart-summary-total"><span>Tổng thanh toán</span><strong class="price" th:text="${#numbers.formatDecimal(orderTotal, 0, 'POINT', 0, 'POINT')} + ' ₫'"></strong></div>
+        <p class="small text-secondary mt-3 mb-0">Mã giảm giá chưa được hỗ trợ ở giai đoạn này.</p>
+      </div>
+    </aside>
+  </div>
+</main>
+<footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>

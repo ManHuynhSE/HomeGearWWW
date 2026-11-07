@@ -34,9 +34,11 @@ public class SecurityConfig {
         http.userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/products", "/products/**", "/register",
-                                "/css/**", "/error").permitAll()
+                                "/css/**", "/error","/api/chat/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/checkout", "/orders/**", "/account/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers("/checkout", "/checkout/**", "/orders/**", "/account/**")
+                        .hasAnyRole("CUSTOMER", "ADMIN")
                         .anyRequest().permitAll())
                 .formLogin(form -> form
                         .loginPage("/login")

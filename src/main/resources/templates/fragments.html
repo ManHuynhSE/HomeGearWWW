@@ -315,5 +315,20 @@
     </div>
   </div>
 </div>
+<div th:fragment="cartToast">
+  <div th:if="${cartSuccess}" class="toast-container position-fixed bottom-0 end-0 p-3" aria-live="polite" aria-atomic="true">
+    <div id="cart-success-toast" class="toast text-bg-success border-0" role="status" data-bs-delay="3500">
+      <div class="d-flex"><div class="toast-body"><i class="bi bi-check-circle me-2"></i><span th:text="${cartSuccess}"></span></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
+      </div>
+    </div>
+  </div>
+  <script th:if="${cartSuccess}">
+    document.addEventListener("DOMContentLoaded", () => {
+      const toastElement = document.getElementById("cart-success-toast");
+      if (toastElement && window.bootstrap) bootstrap.Toast.getOrCreateInstance(toastElement).show();
+    });
+  </script>
+</div>
 </body>
 </html>

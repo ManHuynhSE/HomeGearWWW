@@ -52,6 +52,10 @@ public class Product {
     @OrderBy("id ASC")
     private List<ProductImage> galleryImages = new ArrayList<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC, id ASC")
+    private List<ProductSpecification> specifications = new ArrayList<>();
+
     protected Product() {
     }
 
@@ -81,6 +85,7 @@ public class Product {
     public String getImageSourceUrl() { return imageSourceUrl; }
     public Category getCategory() { return category; }
     public List<ProductImage> getGalleryImages() { return galleryImages; }
+    public List<ProductSpecification> getSpecifications() { return specifications; }
     public String getSku() {
         return id == null ? "" : String.format(Locale.ROOT, "HG-%06d", id);
     }
@@ -98,6 +103,15 @@ public class Product {
     public void addGalleryImage(ProductImage image) {
         image.setProduct(this);
         galleryImages.add(image);
+    }
+    public void setSpecifications(List<ProductSpecification> specifications) {
+        this.specifications.clear();
+        if (specifications != null) {
+            specifications.forEach(specification -> {
+                specification.setProduct(this);
+                this.specifications.add(specification);
+            });
+        }
     }
     public void setName(String name) { this.name = name; }
     public void setPrice(BigDecimal price) { this.price = price; }

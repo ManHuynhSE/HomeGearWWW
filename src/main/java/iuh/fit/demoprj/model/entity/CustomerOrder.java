@@ -23,6 +23,24 @@ public class CustomerOrder {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal total;
 
+    @Column(length = 120)
+    private String recipientName;
+
+    @Column(length = 32)
+    private String recipientPhone;
+
+    @Column(length = 500)
+    private String shippingAddress;
+
+    @Column(length = 32)
+    private String paymentMethod;
+
+    @Column(precision = 15, scale = 2)
+    private BigDecimal shippingFee;
+
+    @Column(unique = true, length = 36)
+    private String checkoutToken;
+
     @Column(nullable = false)
     private String status = "NEW";
 
@@ -37,10 +55,27 @@ public class CustomerOrder {
         this.total = total;
     }
 
+    public CustomerOrder(UserAccount customer, BigDecimal total, String recipientName,
+                         String recipientPhone, String shippingAddress, String paymentMethod,
+                         BigDecimal shippingFee, String checkoutToken) {
+        this(customer, total);
+        this.recipientName = recipientName;
+        this.recipientPhone = recipientPhone;
+        this.shippingAddress = shippingAddress;
+        this.paymentMethod = paymentMethod;
+        this.shippingFee = shippingFee;
+        this.checkoutToken = checkoutToken;
+    }
+
     public Long getId() { return id; }
     public UserAccount getCustomer() { return customer; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public BigDecimal getTotal() { return total; }
+    public String getRecipientName() { return recipientName; }
+    public String getRecipientPhone() { return recipientPhone; }
+    public String getShippingAddress() { return shippingAddress; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public BigDecimal getShippingFee() { return shippingFee; }
     public String getStatus() { return status; }
     public List<OrderItem> getItems() { return items; }
     public void addItem(OrderItem item) { items.add(item); item.setOrder(this); }

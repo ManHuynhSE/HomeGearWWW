@@ -53,6 +53,7 @@
 - [x] Bổ sung chọn số lượng, trạng thái tồn kho chính xác, nút **Thêm vào giỏ** và **Mua ngay**; “Mua ngay” thêm vào giỏ rồi mở giỏ hàng.
 - [x] Vô hiệu hóa thao tác mua khi hết hàng; kiểm tra số lượng khi thêm giỏ và kiểm tra lại tồn kho lúc tạo đơn.
 - [x] Tổ chức nội dung thành tab Mô tả, Thông số kỹ thuật, Đánh giá và Chính sách; hiển thị trạng thái chưa có dữ liệu khi chưa cấu hình.
+- [x] Lưu thông số theo sản phẩm, cho phép quản trị nhập/chỉnh sửa theo cặp tên-giá trị-đơn vị và hiển thị ở trang chi tiết; seed chỉ dùng thông tin có trong tên/mô tả.
 - [x] Hiển thị sản phẩm liên quan, ngưỡng miễn phí vận chuyển hiện được cấu hình và liên kết chính sách chỉ khi đã cung cấp.
 - [x] Cập nhật title, meta description, canonical URL và dữ liệu có cấu trúc Product cho từng sản phẩm.
 - [x] Tạo URL thân thiện theo slug; URL `/products/{id}` cũ vẫn hoạt động và trỏ canonical sang URL mới.
@@ -60,17 +61,17 @@
 ## P4 — Giỏ hàng, checkout và sau đặt hàng
 
 - [x] Có giỏ hàng session, cập nhật số lượng và luồng tạo đơn cơ bản.
-- [ ] Hoàn thiện giỏ hàng: tăng/giảm số lượng, xóa mặt hàng, tạm tính và tổng tiền cập nhật nhất quán.
+- [x] Hoàn thiện giỏ hàng: tăng/giảm số lượng, xóa mặt hàng, tính tạm tính và cập nhật tổng tiền.
 - [ ] Thêm mã giảm giá sau khi có mô hình và quy tắc áp dụng coupon.
-- [ ] Xác định cách tính phí vận chuyển, ngưỡng miễn phí ship và hiển thị rõ phí trước khi xác nhận đơn.
-- [ ] Thiết kế checkout theo bước: thông tin giao hàng, vận chuyển, thanh toán, xác nhận đơn.
-- [ ] Bổ sung họ tên, SĐT, địa chỉ giao hàng; tích hợp chọn Tỉnh/Quận/Phường sau khi chốt nhà cung cấp dữ liệu địa chỉ.
-- [ ] Bổ sung phương thức COD và chuyển khoản; tích hợp VNPay/MoMo chỉ sau khi có tài khoản, môi trường kiểm thử và quy trình đối soát.
-- [ ] Hiển thị tóm tắt đơn hàng và tổng tiền cuối cùng trước khi đặt hàng.
-- [ ] Tạo trang đặt hàng thành công hiển thị mã đơn; gửi email xác nhận sau khi cấu hình dịch vụ email.
-- [ ] Đánh giá hỗ trợ guest checkout: cần thiết kế định danh đơn, tra cứu đơn an toàn và liên kết tài khoản nếu khách đăng ký sau đó.
-- [ ] Chống đặt hàng lặp khi người dùng tải lại/gửi lại biểu mẫu checkout.
-- [ ] Hiển thị thông báo toast khi thêm/cập nhật/xóa sản phẩm khỏi giỏ.
+- [x] Xác định và cấu hình phí vận chuyển 30.000₫ dưới ngưỡng miễn phí; miễn phí từ 500.000₫; hiển thị trước xác nhận.
+- [x] Bổ sung checkout theo các phần thông tin giao hàng, vận chuyển, COD và xác nhận trong một trang.
+- [x] Lưu họ tên, số điện thoại và địa chỉ tự nhập cùng đơn; bộ chọn Tỉnh/Quận/Phường chờ nhà cung cấp dữ liệu địa chỉ.
+- [x] Hỗ trợ COD; chuyển khoản/VNPay/MoMo chưa bật vì chưa có thông tin tài khoản/tích hợp và quy trình đối soát.
+- [x] Hiển thị sản phẩm, phí ship và tổng thanh toán cuối trước khi đặt hàng.
+- [x] Tạo trang đặt hàng thành công hiển thị mã đơn và tổng tiền; email xác nhận chờ cấu hình dịch vụ email.
+- [x] Giữ checkout yêu cầu đăng nhập; guest checkout được hoãn theo quyết định, cho tới khi có tra cứu đơn an toàn.
+- [x] Chống gửi checkout lặp bằng token duy nhất gắn với đơn và ràng buộc unique ở database.
+- [x] Hiển thị toast khi thêm/cập nhật/xóa sản phẩm khỏi giỏ.
 - [ ] Bổ sung thanh mua hàng cố định ở cuối màn hình mobile tại trang chi tiết sản phẩm.
 
 ## P5 — Tài khoản khách hàng

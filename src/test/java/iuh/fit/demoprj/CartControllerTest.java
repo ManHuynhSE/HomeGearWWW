@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.ui.ExtendedModelMap;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
@@ -50,6 +51,31 @@ class CartControllerTest {
         assertEquals("redirect:/cart", redirect);
         assertEquals(Map.of(25L, 2), session.getAttribute("cart"));
         assertTrue(redirectAttributes.getFlashAttributes().containsKey("cartError"));
+    }
+
+    @Test
+    void checkoutPreviewCalculatesFlatAndFreeShippingTotals() {
+        CatalogService catalog = mock(CatalogService.class);
+        Product product = productWithId(25L, 10);
+        ReflectionTestUtils.setField(product, "price", BigDecimal.valueOf(200_000));
+        when(catalog.getProduct(25L)).thenReturn(product);
+        CartController controller = new CartController(catalog, mock(OrderService.class));
+        ReflectionTestUtils.setField(controller, "freeShippingThreshold", BigDecimal.valueOf(500_000));
+        ReflectionTestUtils.setField(controller, "shippingFlatFee", BigDecimal.valueOf(30_000));
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("cart", Map.of(25L, 1));
+        ExtendedModelMap model = new ExtendedModelMap();
+
+        assertEquals("checkout", controller.checkoutPage(session, model));
+        assertEquals(BigDecimal.valueOf(200_000), model.getAttribute("subtotal"));
+        assertEquals(BigDecimal.valueOf(30_000), model.getAttribute("shippingFee"));
+        assertEquals(BigDecimal.valueOf(230_000), model.getAttribute("orderTotal"));
+
+        session.setAttribute("cart", Map.of(25L, 3));
+        model = new ExtendedModelMap();
+        assertEquals("checkout", controller.checkoutPage(session, model));
+        assertEquals(BigDecimal.ZERO, model.getAttribute("shippingFee"));
+        assertEquals(BigDecimal.valueOf(600_000), model.getAttribute("orderTotal"));
     }
 
     private Product productWithId(Long id, int stock) {

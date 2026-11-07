@@ -13,7 +13,6 @@
     </ol>
   </nav>
 
-  <div th:if="${cartSuccess}" class="alert alert-success" role="status" th:text="${cartSuccess}"></div>
   <div th:if="${cartError}" class="alert alert-warning" role="alert" th:text="${cartError}"></div>
 
   <section class="row g-4 g-lg-5 align-items-start">
@@ -102,7 +101,17 @@
         <p class="mb-0" th:text="${product.description != null and !product.description.isBlank() ? product.description : 'Chưa có mô tả cho sản phẩm này.'}"></p>
       </div>
       <div class="tab-pane fade" id="specifications-panel" role="tabpanel" aria-labelledby="specifications-tab">
-        <p class="text-secondary mb-0">Thông số kỹ thuật chưa được cung cấp cho sản phẩm này.</p>
+        <p th:if="${#lists.isEmpty(product.specifications)}" class="text-secondary mb-0">Thông số kỹ thuật chưa được cung cấp cho sản phẩm này.</p>
+        <div th:unless="${#lists.isEmpty(product.specifications)}" class="table-responsive">
+          <table class="table product-specification-table mb-0">
+            <tbody>
+              <tr th:each="specification : ${product.specifications}">
+                <th scope="row" th:text="${specification.label}"></th>
+                <td><span th:text="${specification.value}"></span><span th:if="${specification.unit != null}" th:text="' ' + ${specification.unit}"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class="tab-pane fade" id="reviews-panel" role="tabpanel" aria-labelledby="reviews-tab">
         <p class="text-secondary mb-0"><i class="bi bi-chat-square-text me-2"></i>Chưa có đánh giá cho sản phẩm này.</p>
@@ -209,6 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
+<div th:replace="~{fragments :: cartToast}"></div>
 <footer th:replace="~{fragments :: footer}"></footer>
 </body>
 </html>

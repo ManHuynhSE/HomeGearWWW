@@ -322,3 +322,45 @@ WHERE NOT EXISTS (
     WHERE existing.product_id = product.id
       AND existing.image_url = seed.image_url
 );
+
+-- Only add specifications directly supported by the seeded product name/description.
+-- More detailed values should come from verified supplier or manufacturer data.
+INSERT INTO product_specifications
+    (product_id, spec_key, label, value, unit, display_order)
+SELECT product.id, seed.spec_key, seed.label, seed.value, seed.unit, seed.display_order
+FROM (
+    SELECT 'Nồi chiên không dầu 5L' AS product_name, 'dung-tich' AS spec_key,
+        'Dung tích' AS label, '5' AS value, 'L' AS unit, 0 AS display_order
+    UNION ALL SELECT 'Máy lạnh Inverter 1 HP', 'cong-suat', 'Công suất', '1', 'HP', 0
+    UNION ALL SELECT 'Máy lạnh Inverter 1.5 HP', 'cong-suat', 'Công suất', '1.5', 'HP', 0
+    UNION ALL SELECT 'Máy lạnh Inverter 2 HP', 'cong-suat', 'Công suất', '2', 'HP', 0
+    UNION ALL SELECT 'Smart TV 4K 55 inch', 'do-phan-giai', 'Độ phân giải', '4K', NULL, 0
+    UNION ALL SELECT 'Smart TV 4K 55 inch', 'kich-thuoc-man-hinh', 'Kích thước màn hình', '55', 'inch', 1
+    UNION ALL SELECT 'Ổ cắm thông minh Wi-Fi', 'ket-noi', 'Kết nối', 'Wi-Fi', NULL, 0
+    UNION ALL SELECT 'Đèn thông minh RGB', 'mau-sac', 'Màu sắc', 'RGB', NULL, 0
+    UNION ALL SELECT 'Ấm siêu tốc Bosch 1.7L', 'dung-tich', 'Dung tích', '1.7', 'L', 0
+    UNION ALL SELECT 'Lò vi sóng điện tử 20L', 'dung-tich', 'Dung tích', '20', 'L', 0
+    UNION ALL SELECT 'Lò nướng để bàn 12L', 'dung-tich', 'Dung tích', '12', 'L', 0
+    UNION ALL SELECT 'Nồi cơm điện 1.8L', 'dung-tich', 'Dung tích', '1.8', 'L', 0
+    UNION ALL SELECT 'Quạt bàn 3 tốc độ', 'so-toc-do', 'Số tốc độ', '3', NULL, 0
+    UNION ALL SELECT 'Smart TV 4K 43 inch', 'do-phan-giai', 'Độ phân giải', '4K', NULL, 0
+    UNION ALL SELECT 'Smart TV 4K 43 inch', 'kich-thuoc-man-hinh', 'Kích thước màn hình', '43', 'inch', 1
+    UNION ALL SELECT 'Smart TV 4K 65 inch', 'do-phan-giai', 'Độ phân giải', '4K', NULL, 0
+    UNION ALL SELECT 'Smart TV 4K 65 inch', 'kich-thuoc-man-hinh', 'Kích thước màn hình', '65', 'inch', 1
+    UNION ALL SELECT 'Router Wi-Fi băng tần kép', 'bang-tan', 'Băng tần', 'Kép', NULL, 0
+    UNION ALL SELECT 'Router Wi-Fi 6 gia đình', 'chuan-wi-fi', 'Chuẩn Wi-Fi', 'Wi-Fi 6', NULL, 0
+    UNION ALL SELECT 'Máy lọc không khí HEPA', 'bo-loc', 'Bộ lọc', 'HEPA', NULL, 0
+    UNION ALL SELECT 'Robot hút bụi lau nhà', 'chuc-nang', 'Chức năng', 'Hút bụi và lau nhà', NULL, 0
+    UNION ALL SELECT 'Máy giặt cửa trước 9 kg', 'khoi-luong-giat', 'Khối lượng giặt', '9', 'kg', 0
+    UNION ALL SELECT 'Máy giặt cửa trước 9 kg phiên bản 2', 'khoi-luong-giat', 'Khối lượng giặt', '9', 'kg', 0
+    UNION ALL SELECT 'Bộ mở rộng Wi-Fi gia đình', 'ket-noi', 'Kết nối', 'Wi-Fi', NULL, 0
+    UNION ALL SELECT 'Ổ cắm thông minh điều khiển từ xa', 'tinh-nang', 'Tính năng', 'Điều khiển từ xa', NULL, 0
+    UNION ALL SELECT 'Bóng đèn LED IKEA E14', 'duoi-den', 'Đui đèn', 'E14', NULL, 0
+) AS seed
+JOIN products AS product ON product.name = seed.product_name
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM product_specifications AS existing
+    WHERE existing.product_id = product.id
+      AND existing.spec_key = seed.spec_key
+);
