@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class CatalogServiceSpecificationTest {
@@ -31,13 +32,15 @@ class CatalogServiceSpecificationTest {
     private CategoryRepository categories;
     @Mock
     private OrderItemRepository orderItems;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private CatalogService catalog;
     private Category category;
 
     @BeforeEach
     void setUp() {
-        catalog = new CatalogService(products, categories, orderItems);
+        catalog = new CatalogService(products, categories, orderItems, eventPublisher);
         category = new Category("Nhà bếp");
     }
 
@@ -45,6 +48,11 @@ class CatalogServiceSpecificationTest {
     void saveProductParsesSpecificationsAndAllowsMissingUnit() {
         when(categories.findById(1L)).thenReturn(Optional.of(category));
         when(products.existsByNameIgnoreCaseAndCategoryId("Nồi cơm", 1L)).thenReturn(false);
+        when(products.save(any(Product.class))).thenAnswer(invocation -> {
+            Product saved = invocation.getArgument(0);
+            org.springframework.test.util.ReflectionTestUtils.setField(saved, "id", 1L);
+            return saved;
+        });
         catalog.saveProduct(null, "Nồi cơm", new BigDecimal("1000"), 5,
                 null, null, null, "", null, null, null,
                 "Dung tích | 1.8 | L\nKiểu nấu | Cơ bản |", 1L);

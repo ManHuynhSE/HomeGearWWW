@@ -2,11 +2,13 @@ package iuh.fit.demoprj.ai.web;
 
 import iuh.fit.demoprj.ai.service.AiProviderException;
 import iuh.fit.demoprj.ai.service.AiServiceUnavailableException;
+import iuh.fit.demoprj.ai.security.ChatRateLimitExceededException;
 import iuh.fit.demoprj.ai.web.dto.ChatErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -36,6 +38,13 @@ public class AiApiExceptionHandler {
     ResponseEntity<ChatErrorResponse> handleDisabledAi() {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(new ChatErrorResponse("Dịch vụ AI hiện chưa được bật."));
+    }
+
+    @ExceptionHandler(ChatRateLimitExceededException.class)
+    ResponseEntity<ChatErrorResponse> handleRateLimit(ChatRateLimitExceededException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(exception.getRetryAfterSeconds()))
+                .body(new ChatErrorResponse("Bạn gửi yêu cầu quá nhanh. Vui lòng thử lại sau."));
     }
 
     @ExceptionHandler(AiProviderException.class)

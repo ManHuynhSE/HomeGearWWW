@@ -32,6 +32,9 @@ public class Product {
     @Column(nullable = false)
     private int stock;
 
+    @Column(nullable = false, columnDefinition = "boolean not null default true")
+    private boolean active = true;
+
     @Column(nullable = false, length = 2000)
     private String description = "";
 
@@ -79,6 +82,7 @@ public class Product {
     public LocalDateTime getPromotionStartsAt() { return promotionStartsAt; }
     public LocalDateTime getPromotionEndsAt() { return promotionEndsAt; }
     public int getStock() { return stock; }
+    public boolean isActive() { return active; }
     public String getDescription() { return description; }
     public String getImageUrl() { return imageUrl; }
     public String getImageAttribution() { return imageAttribution; }
@@ -119,6 +123,7 @@ public class Product {
     public void setPromotionStartsAt(LocalDateTime promotionStartsAt) { this.promotionStartsAt = promotionStartsAt; }
     public void setPromotionEndsAt(LocalDateTime promotionEndsAt) { this.promotionEndsAt = promotionEndsAt; }
     public void setStock(int stock) { this.stock = stock; }
+    public void setActive(boolean active) { this.active = active; }
     public void setDescription(String description) { this.description = description; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public void setImageAttribution(String imageAttribution) { this.imageAttribution = imageAttribution; }

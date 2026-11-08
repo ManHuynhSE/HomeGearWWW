@@ -50,10 +50,16 @@ public class CartController {
     public String add(@PathVariable Long id, @RequestParam(defaultValue = "1") int quantity,
                       @RequestParam(defaultValue = "cart") String intent,
                       HttpSession session, RedirectAttributes redirectAttributes) {
-        Product product = catalog.getProduct(id);
         boolean returnToDetail = "detail".equals(intent);
         if (!returnToDetail && !"cart".equals(intent)) {
             throw new IllegalArgumentException("Thao tác giỏ hàng không hợp lệ.");
+        }
+        Product product;
+        try {
+            product = catalog.getActiveProduct(id);
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("cartError", ex.getMessage());
+            return "redirect:/products";
         }
         Map<Long, Integer> cart = cart(session);
         if (cart == null) cart = new LinkedHashMap<>();
@@ -89,7 +95,7 @@ public class CartController {
         Map<Long, Integer> cart = cart(session);
         try {
             if (cart != null) {
-                Product product = catalog.getProduct(productId);
+                Product product = catalog.getActiveProduct(productId);
                 if (quantity <= 0) cart.remove(productId);
                 else if (quantity <= product.getStock()) cart.put(productId, quantity);
                 else throw new IllegalArgumentException("Sản phẩm " + product.getName()

@@ -107,6 +107,7 @@
     <a th:if="${storeChannels['messenger'] != ''}" class="store-contact-button store-contact-messenger" th:href="${storeChannels['messenger']}" target="_blank" rel="noopener noreferrer" aria-label="Liên hệ qua Messenger"><i class="bi bi-messenger"></i><span>Messenger</span></a>
     <a th:if="${storeContact['hotline'] != ''}" class="store-contact-button store-contact-hotline" th:href="|tel:${storeContact['hotline']}|" aria-label="Gọi hotline"><i class="bi bi-telephone-fill"></i><span>Hotline</span></a>
   </nav>
+  <div th:replace="~{chat-widget :: chatWidget}"></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
   (() => {
@@ -252,6 +253,7 @@
     window.setInterval(updateCountdown, 1000);
   });
   </script>
+  <script th:src="@{/js/chat.js}" defer></script>
 </footer>
 <div th:fragment="productCard(product)" class="card product-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
   <div class="product-visual store-product-visual">

@@ -50,8 +50,8 @@ public class OrderService {
             if (entry.getValue() == null || entry.getValue() <= 0) {
                 throw new IllegalArgumentException("Số lượng sản phẩm không hợp lệ.");
             }
-            Product product = products.findForCheckoutById(entry.getKey())
-                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại."));
+            Product product = products.findForCheckoutByIdAndActiveTrue(entry.getKey())
+                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại hoặc đã ngừng kinh doanh."));
             selected.add(product);
         }
         existingOrder = orders.findForCheckoutTokenByCheckoutToken(checkoutToken).orElse(null);
@@ -111,6 +111,13 @@ public class OrderService {
         UserAccount customer = accounts.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
         return orders.findByCustomerIdOrderByCreatedAtDesc(customer.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CustomerOrder> findRecentOrdersForCustomer(String email) {
+        UserAccount customer = accounts.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+        return orders.findTop10ByCustomerIdOrderByCreatedAtDesc(customer.getId());
     }
 
     public List<CustomerOrder> findAll() {

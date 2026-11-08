@@ -8,6 +8,7 @@
     <div class="admin-nav-label">KHÔNG GIAN QUẢN TRỊ</div>
     <nav class="admin-nav" aria-label="Điều hướng quản trị">
       <a class="active" href="#overview"><i class="bi bi-grid-1x2-fill"></i><span>Tổng quan</span></a>
+      <a href="/admin/assistant"><i class="bi bi-stars"></i><span>Trợ lý AI</span></a>
       <a href="#orders"><i class="bi bi-receipt"></i><span>Đơn hàng</span><span class="admin-nav-count" th:text="${newOrderCount}"></span></a>
       <a href="#products"><i class="bi bi-box-seam"></i><span>Sản phẩm</span></a>
       <a href="#categories"><i class="bi bi-tags"></i><span>Danh mục</span></a>
@@ -89,6 +90,7 @@
           <input class="form-control" name="price" type="number" min="0.01" step="0.01" required placeholder="Giá bán" th:value="${editProduct != null ? editProduct.price : ''}">
           <input class="form-control" name="stock" type="number" min="0" required placeholder="Tồn kho" th:value="${editProduct != null ? editProduct.stock : ''}">
           <select class="form-select" name="categoryId" required><option value="">Chọn danh mục</option><option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}" th:selected="${editProduct != null and editProduct.category.id == category.id}"></option></select>
+          <select class="form-select" name="active" aria-label="Trạng thái kinh doanh"><option value="true" th:selected="${editProduct == null or editProduct.active}">Đang kinh doanh</option><option value="false" th:selected="${editProduct != null and !editProduct.active}">Ngừng kinh doanh</option></select>
           <input class="form-control" name="description" placeholder="Mô tả" th:value="${editProduct != null ? editProduct.description : ''}">
           <input class="form-control" name="imageUrl" placeholder="Đường dẫn ảnh (tùy chọn)" th:value="${editProduct != null ? editProduct.imageUrl : ''}">
           <input class="form-control" name="imageAttribution" placeholder="Tác giả / giấy phép ảnh" th:value="${editProduct != null ? editProduct.imageAttribution : ''}">
@@ -103,9 +105,9 @@
           <button class="btn admin-primary-btn"><i class="bi bi-save me-1"></i><span th:text="${editProduct != null ? 'Cập nhật' : 'Thêm sản phẩm'}"></span></button>
           <a th:if="${editProduct != null}" href="/admin#products" class="btn admin-outline-btn">Hủy</a>
         </form>
-        <div class="table-responsive admin-table-wrap"><table class="table admin-table align-middle mb-0"><thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá bán</th><th>Tồn kho</th><th class="text-end">Thao tác</th></tr></thead><tbody>
-          <tr th:each="product : ${products}"><td><strong th:text="${product.name}"></strong><small class="d-block text-secondary" th:text="'#' + ${product.id}"></small></td><td th:text="${product.category.name}"></td><td class="price" th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' ₫'"></td><td><span class="admin-stock-badge" th:classappend="${product.stock <= 0 ? ' stock-low' : (product.stock <= 5 ? ' stock-low' : ' stock-ok')}" th:text="${product.stock <= 0 ? 'Hết hàng' : product.stock + ' còn lại'}"></span></td><td class="text-end"><a class="admin-icon-btn" th:href="@{/admin(editProduct=${product.id})}"><i class="bi bi-pencil"></i></a><form class="d-inline" th:action="@{/admin/products/delete/{id}(id=${product.id})}" method="post"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="admin-icon-btn danger" aria-label="Xóa sản phẩm"><i class="bi bi-trash"></i></button></form></td></tr>
-          <tr th:if="${#lists.isEmpty(products)}"><td colspan="5" class="admin-empty">Không tìm thấy sản phẩm.</td></tr>
+        <div class="table-responsive admin-table-wrap"><table class="table admin-table align-middle mb-0"><thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá bán</th><th>Tồn kho</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead><tbody>
+          <tr th:each="product : ${products}"><td><strong th:text="${product.name}"></strong><small class="d-block text-secondary" th:text="'#' + ${product.id}"></small></td><td th:text="${product.category.name}"></td><td class="price" th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' ₫'"></td><td><span class="admin-stock-badge" th:classappend="${product.stock <= 0 ? ' stock-low' : (product.stock <= 5 ? ' stock-low' : ' stock-ok')}" th:text="${product.stock <= 0 ? 'Hết hàng' : product.stock + ' còn lại'}"></span></td><td><span class="admin-status-badge" th:classappend="${product.active ? ' status-done' : ' status-cancelled'}" th:text="${product.active ? 'Đang bán' : 'Ngừng bán'}"></span></td><td class="text-end"><a class="admin-icon-btn" th:href="@{/admin(editProduct=${product.id})}"><i class="bi bi-pencil"></i></a><form class="d-inline" th:action="@{/admin/products/delete/{id}(id=${product.id})}" method="post"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="admin-icon-btn danger" aria-label="Xóa sản phẩm"><i class="bi bi-trash"></i></button></form></td></tr>
+          <tr th:if="${#lists.isEmpty(products)}"><td colspan="6" class="admin-empty">Không tìm thấy sản phẩm.</td></tr>
         </tbody></table></div>
       </section>
 

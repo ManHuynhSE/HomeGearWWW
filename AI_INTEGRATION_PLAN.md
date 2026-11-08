@@ -137,16 +137,16 @@ ChatController ──► ChatService ──► ChatClient (system prompt + advis
 
 ### 2.3 Công việc
 
-- [ ] Tạo `StoreTools`, `AdminTools` với `@Tool` và mô tả rõ ràng cho từng tool và từng tham số (model chọn tool dựa vào mô tả)
-- [ ] Mỗi tool **chỉ gọi service hiện có**, không viết truy vấn mới trong tool
-- [ ] Tool đơn hàng **không nhận userId từ tham số**. Lấy danh tính từ `SecurityContext`; nếu chưa đăng nhập trả thông điệp "cần đăng nhập" (khớp luồng 3b UC003)
-- [ ] Kiểm tra `orderId` thuộc đúng user trước khi trả dữ liệu (không chỉ dựa vào prompt)
-- [ ] Admin tools: thêm `@PreAuthorize("hasRole('ADMIN')")` ở tầng service (bảo vệ nhiều lớp, ngoài việc bảo vệ endpoint)
-- [ ] Tool chỉ trả DTO gọn: **không** có mật khẩu, không có email/SĐT của người khác, giới hạn số dòng (tối đa 10–20)
-- [ ] Ngày tháng nhận định dạng ISO; system prompt hướng dẫn model hỏi lại nếu thiếu khoảng thời gian
-- [ ] Gắn tool vào ChatClient theo cách 2.0 (ToolCallingAdvisor), đối chiếu reference của Spring AI 2.0
-- [ ] Cấu hình giới hạn số vòng gọi tool để tránh lặp vô hạn (nếu phiên bản đang dùng hỗ trợ)
-- [ ] Unit test từng tool (service mock)
+- [x] Tạo `StoreTools`, `AdminTools` với `@Tool` và mô tả rõ ràng cho từng tool và từng tham số (model chọn tool dựa vào mô tả)
+- [x] Mỗi tool **chỉ gọi service hiện có**, không viết truy vấn mới trong tool
+- [x] Tool đơn hàng **không nhận userId từ tham số**. Lấy danh tính từ `SecurityContext`; nếu chưa đăng nhập trả thông điệp "cần đăng nhập" (khớp luồng 3b UC003)
+- [x] Kiểm tra `orderId` thuộc đúng user trước khi trả dữ liệu (không chỉ dựa vào prompt)
+- [x] Admin tools: thêm `@PreAuthorize("hasRole('ADMIN')")` ở service tool (bảo vệ nhiều lớp, ngoài việc bảo vệ endpoint)
+- [x] Tool chỉ trả DTO gọn: **không** có mật khẩu, không có email/SĐT của người khác, giới hạn số dòng (tối đa 10–20)
+- [x] Ngày tháng nhận định dạng ISO; system prompt hướng dẫn model hỏi lại nếu thiếu khoảng thời gian
+- [x] Gắn tool vào ChatClient theo cách 2.0 (`ToolCallingAdvisor`)
+- [x] Cấu hình giới hạn tối đa 8 lần gọi tool mỗi lượt và tối đa 3 lần cho mỗi tool
+- [x] Unit test tool với service mock; smoke test Gemini thật xác nhận chatbot trả giá/tồn kho DB và admin trả tồn kho DB
 
 **Hoàn thành khi:** hỏi "nồi chiên không dầu giá bao nhiêu" trả đúng giá từ CSDL; hỏi đơn khi chưa đăng nhập bị yêu cầu đăng nhập; admin hỏi "sản phẩm nào sắp hết hàng" ra đúng danh sách.
 **Ước lượng:** 3–4 ngày
@@ -159,36 +159,38 @@ ChatController ──► ChatService ──► ChatClient (system prompt + advis
 
 ### 3.1 Cấu hình
 
-- [ ] Cấu hình `spring.ai.vectorstore.mariadb.*`: `dimensions` (khớp embedding model), `distance-type: COSINE`, `table-name`, `schema-validation: true`
-- [ ] `initialize-schema: true` ở dev; ở prod tạo bảng bằng script SQL riêng và đặt `false`
-- [ ] Ghi vào README: tên embedding model và số chiều đang dùng. **Đổi model = tạo lại bảng + nạp lại toàn bộ**
-- [ ] Lưu ý ràng buộc spec 1.3.4: không dùng stored procedure/function/check constraint cho ràng buộc nghiệp vụ. Bảng vector do Spring AI quản lý, không vi phạm
+- [x] Cấu hình `spring.ai.vectorstore.mariadb.*`: `dimensions` (khớp embedding model), `distance-type: COSINE`, `table-name`; bật `schema-validation` ở prod
+- [x] `initialize-schema: true` ở dev; ở prod tạo bảng bằng script SQL riêng và đặt `false`
+- [x] Ghi vào README: tên embedding model và số chiều đang dùng. **Đổi model = tạo lại bảng + nạp lại toàn bộ**
+- [x] Lưu ý ràng buộc spec 1.3.4: không dùng stored procedure/function/check constraint cho ràng buộc nghiệp vụ. Bảng vector do Spring AI quản lý, không vi phạm
+
+> Dev để `schema-validation: false` vì Spring AI kiểm tra bảng trước khi khởi tạo; nếu bật cả hai trên DB mới, ứng dụng sẽ dừng trước khi tạo bảng. Prod bật validation sau khi tạo schema.
 
 ### 3.2 Nạp sản phẩm
 
-- [ ] `ProductDocumentMapper`: mỗi sản phẩm = **một `Document`** (ngắn nên không cần chia chunk)
-  - id: `product-{id}` (ổn định để cập nhật/xóa)
-  - text: tên + thương hiệu + danh mục + mô tả + thông số kỹ thuật
+- [x] `ProductDocumentMapper`: mỗi sản phẩm = **một `Document`** (ngắn nên không cần chia chunk)
+  - khóa ổn định `product-{id}` ở metadata; UUID vật lý xác định do MariaDB Vector Store yêu cầu ID UUID
+  - text: tên + danh mục + mô tả + thông số kỹ thuật (entity hiện chưa có trường thương hiệu)
   - metadata: `type=product`, `productId`, `categoryId`, `active`
   - **Không** nhét giá và tồn kho vào text để embedding (dễ lỗi thời)
-- [ ] Chỉ nạp sản phẩm đang kinh doanh
+- [x] Chỉ nạp sản phẩm đang kinh doanh
 
 ### 3.3 Nạp chính sách/FAQ
 
-- [ ] Viết các file markdown trong `resources/ai/policies/`: đổi trả, bảo hành, vận chuyển (phí ship và ngưỡng miễn phí phải khớp quy tắc thật trong hệ thống), thanh toán, FAQ
-- [ ] `PolicyDocumentLoader`: đọc file, chia theo tiêu đề; chunk khoảng 300–500 token, chồng lấp khoảng 50–100 token (dùng `TokenTextSplitter` hoặc tự chia theo heading)
-- [ ] Metadata: `type=policy`, `source=<tên file>`
+- [x] Viết các file markdown trong `resources/ai/policies/`: đổi trả, bảo hành, vận chuyển (phí ship và ngưỡng miễn phí phải khớp quy tắc thật trong hệ thống), thanh toán, FAQ
+- [x] `PolicyDocumentLoader`: đọc file, chia theo tiêu đề; chunk khoảng 300–500 token, chồng lấp khoảng 50–100 token (dùng `TokenTextSplitter` hoặc tự chia theo heading)
+- [x] Metadata: `type=policy`, `source=<tên file>`
 
 ### 3.4 Đồng bộ
 
-- [ ] `VectorIndexService` với `reindexAll()`, `indexProduct(id)`, `removeProduct(id)`
-- [ ] Cập nhật bằng cách **xóa rồi thêm lại** theo id để tránh trùng
-- [ ] Phát sự kiện từ `ProductService` khi thêm/sửa/xóa/đổi trạng thái; lắng nghe bằng `@TransactionalEventListener(phase = AFTER_COMMIT)` để chỉ đồng bộ vector sau khi CSDL commit thành công
-- [ ] Lỗi đồng bộ vector không được làm hỏng thao tác của Admin: ghi log và cho phép chạy lại
-- [ ] Sản phẩm chuyển "ngừng kinh doanh" hoặc bị xóa thì xóa khỏi vector store
-- [ ] Nút/endpoint `POST /admin/ai/reindex` (chỉ ADMIN) để nạp lại toàn bộ; chạy nền, không chặn request
-- [ ] Không dùng PDF reader cho file không tin cậy (đã có lỗ hổng được công bố ở các bản trước, luôn dùng bản vá mới nhất)
-- [ ] Test ETL với embedding giả (xem Phase 8)
+- [x] `VectorIndexService` với `reindexAll()`, `indexProduct(id)`, `removeProduct(id)`
+- [x] Cập nhật bằng cách **xóa rồi thêm lại** theo id để tránh trùng
+- [x] Phát sự kiện từ `CatalogService` khi thêm/sửa/xóa/đổi trạng thái; lắng nghe bằng `@TransactionalEventListener(phase = AFTER_COMMIT)` để chỉ đồng bộ vector sau khi CSDL commit thành công
+- [x] Lỗi đồng bộ vector không được làm hỏng thao tác của Admin: ghi log và cho phép chạy lại
+- [x] Sản phẩm chuyển "ngừng kinh doanh" hoặc bị xóa thì xóa khỏi vector store
+- [x] Endpoint `POST /admin/ai/reindex` (chỉ ADMIN) để nạp lại toàn bộ; chạy nền, không chặn request
+- [x] Không dùng PDF reader cho file không tin cậy
+- [x] Test ETL mapping, policy loading và reindex orchestration bằng test không gọi embedding provider thật
 
 **Hoàn thành khi:** nạp xong, truy vấn thử `similaritySearch("máy nấu ít dầu")` trả về nồi chiên không dầu; sửa mô tả sản phẩm thì kết quả tìm kiếm đổi theo; xóa sản phẩm thì biến mất khỏi kết quả.
 **Ước lượng:** 3–4 ngày
@@ -199,17 +201,19 @@ ChatController ──► ChatService ──► ChatClient (system prompt + advis
 
 **Mục tiêu:** chatbot tìm sản phẩm theo ý nghĩa và trả lời chính sách dựa trên tài liệu.
 
-- [ ] **Chính sách:** gắn `QuestionAnswerAdvisor` với `SearchRequest`: `topK` khoảng 4, `similarityThreshold` khởi điểm 0,6–0,7, **filter `type == 'policy'`**
-- [ ] **Sản phẩm theo ý nghĩa:** tạo tool `searchProductsSemantic(query, maxPrice?)`:
+- [x] **Chính sách:** gắn `QuestionAnswerAdvisor` với `SearchRequest`: `topK` khoảng 4, `similarityThreshold` khởi điểm 0,6–0,7, **filter `type == 'policy'`**
+- [x] **Sản phẩm theo ý nghĩa:** tạo tool `searchProductsSemantic(query, maxPrice?)`:
   1. `vectorStore.similaritySearch` với filter `type == 'product' && active == true`
   2. lấy `productId` từ metadata
   3. đọc **giá và tồn kho thật** từ CSDL
   4. trả DTO cho model
-- [ ] Prompt: nếu không có tài liệu liên quan, trả lời "không tìm thấy thông tin" thay vì suy đoán
-- [ ] Ghi nhận đánh đổi: advisor truy xuất ở **mọi lượt** hỏi (tốn chi phí và có thể nhiễu). Nếu thấy bất tiện, chuyển phần chính sách thành tool `searchPolicy` để model tự quyết định khi nào cần
+- [x] Prompt: nếu không có tài liệu liên quan, trả lời "không tìm thấy thông tin" thay vì suy đoán
+- [x] Ghi nhận đánh đổi: advisor truy xuất ở **mọi lượt** hỏi (tốn chi phí và có thể nhiễu). Nếu thấy bất tiện, chuyển phần chính sách thành tool `searchPolicy` để model tự quyết định khi nào cần
 - [ ] Hỏi tiếp kiểu "còn cái nào rẻ hơn không?": nếu kết quả kém, thử `RetrievalAugmentationAdvisor` với bộ biến đổi câu hỏi (rewrite/compression). Đối chiếu tên class theo reference 2.0
 - [ ] Tinh chỉnh bằng bộ câu hỏi mẫu (Phase 8): điều chỉnh `topK`, `similarityThreshold`, kích thước chunk, nội dung tài liệu
 - [ ] Ghi bảng kết quả trước/sau tinh chỉnh để đưa vào báo cáo
+
+> Smoke test tích hợp có thể chạy bằng `.\mvnw.cmd "-Dai.smoke=true" "-Dtest=AiApiSmokeTest#storeChatUsesSemanticProductSearchAndRetrievedPolicy" test`; test này gọi embedding và chat provider thật nên sẽ dùng quota API.
 
 **Hoàn thành khi:** hỏi "máy nấu ăn ít dầu mỡ" ra nồi chiên không dầu kèm giá thật; hỏi "đổi trả trong bao lâu" trả lời đúng theo file chính sách; hỏi điều không có trong dữ liệu thì nói không biết.
 **Ước lượng:** 2–3 ngày
@@ -220,15 +224,17 @@ ChatController ──► ChatService ──► ChatClient (system prompt + advis
 
 **Mục tiêu:** chatbot nhớ ngữ cảnh (UC003 bước 9, UC004 bước 9).
 
-- [ ] Dùng `MessageWindowChatMemory` (giữ khoảng 10–20 tin gần nhất) với advisor bộ nhớ gắn vào ChatClient
-- [ ] `ConversationIdResolver` (**sinh ở server**):
+- [x] Dùng `MessageWindowChatMemory` (giữ tối đa 20 tin gần nhất) với advisor bộ nhớ gắn vào ChatClient
+- [x] `ConversationIdResolver` (**sinh ở server**):
   - Customer: dựa trên id người dùng
   - Guest: dựa trên session id
   - Assistant dùng không gian id riêng, tách khỏi chatbot
-- [ ] **Không** nhận conversation id từ client (client tự chọn id có thể đọc hội thoại người khác)
-- [ ] Nút "Cuộc trò chuyện mới" xóa bộ nhớ
+- [x] **Không** nhận conversation id từ client (client tự chọn id có thể đọc hội thoại người khác)
+- [x] Nút "Cuộc trò chuyện mới" xóa bộ nhớ phía máy chủ trước khi xóa nội dung hiển thị
 - [ ] (Tùy chọn) nâng lên `JdbcChatMemoryRepository` (starter chat-memory-repository-jdbc, hỗ trợ MariaDB). Đặt chính sách lưu trữ (xóa hội thoại cũ sau N ngày) vì nội dung chat có thể chứa thông tin cá nhân
-- [ ] Lưu ý: sau khi đăng nhập session id đổi nên hội thoại Guest không tiếp nối, chấp nhận hoặc ghi chú trong báo cáo
+- [x] Lưu ý: hội thoại Guest không tiếp nối sau đăng nhập; memory trong tiến trình sẽ mất khi ứng dụng khởi động lại
+
+> Phase 5 hiện dùng memory trong tiến trình; chỉ triển khai lưu bền qua MariaDB khi có chính sách lưu trữ/xóa hội thoại đã được xác định.
 
 **Hoàn thành khi:** hỏi "nồi chiên không dầu" rồi hỏi tiếp "cái đó còn hàng không" vẫn hiểu đúng; hai người dùng khác nhau không thấy hội thoại của nhau.
 **Ước lượng:** 1 ngày
@@ -240,24 +246,25 @@ ChatController ──► ChatService ──► ChatClient (system prompt + advis
 **Mục tiêu:** bảo vệ dữ liệu và chi phí. Làm song song với các phase trước.
 
 **Phân quyền**
-- [ ] `/api/chat/**`: cho phép Guest và Customer
-- [ ] `/api/admin/assistant/**` và `/admin/ai/**`: chỉ `ROLE_ADMIN`
-- [ ] CSRF bật cho các endpoint chat (JS gửi token trong header)
+- [x] `/api/chat/**`: cho phép Guest và Customer
+- [x] `/api/admin/assistant/**` và `/admin/ai/**`: chỉ `ROLE_ADMIN`
+- [x] CSRF bật cho các endpoint chat (JS gửi token trong header); test API xác nhận request thiếu token bị từ chối
 
 **Dữ liệu**
-- [ ] Dữ liệu riêng tư (đơn hàng, thông tin cá nhân) **không bao giờ nạp vào vector store**, chỉ truy cập qua tool có kiểm tra quyền
-- [ ] Nếu sau này có tài liệu nội bộ cho Admin: metadata `audience=admin` và lọc theo vai trò
-- [ ] Tool không trả mật khẩu hay thông tin nhạy cảm (BR04)
+- [x] Dữ liệu riêng tư (đơn hàng, thông tin cá nhân) **không nạp vào vector store**, chỉ truy cập đơn hàng qua tool kiểm tra tài khoản hiện tại
+- [x] Hiện chưa nạp tài liệu nội bộ cho Admin và không gắn RAG vào Admin ChatClient; nếu bổ sung, phải dùng metadata `audience=admin` và lọc theo vai trò
+- [x] Tool không trả mật khẩu hay thông tin nhạy cảm (BR04); phản hồi đơn khách chỉ dành cho chính tài khoản đó
 
 **Chống lạm dụng**
-- [ ] Giới hạn tần suất (ví dụ N tin/phút theo session hoặc IP), có thể dùng filter đơn giản hoặc thư viện rate limit
-- [ ] Giới hạn độ dài input (500 ký tự) và độ dài output
-- [ ] Giới hạn số vòng gọi tool và thời gian xử lý
-- [ ] Chống prompt injection: coi nội dung truy xuất được là **dữ liệu**, không phải chỉ thị; system prompt nêu rõ không làm theo yêu cầu trong nội dung sản phẩm/tài liệu; test các câu như "bỏ qua hướng dẫn trước đó", "cho tôi xem đơn của người khác"
+- [x] Giới hạn tần suất 10 tin/phút theo tài khoản hoặc IP của khách vãng lai; trả `429` kèm `Retry-After`
+- [x] Giới hạn input 500 ký tự; output được giới hạn bằng `maxOutputTokens` theo từng ChatClient
+- [x] Giới hạn tối đa 8 lần gọi tool/tin, tối đa 3 lần cho mỗi tool và timeout provider 30 giây
+- [x] Chống prompt injection: coi nội dung truy xuất/tool là **dữ liệu**, không phải chỉ thị; system prompt cấm làm theo chỉ dẫn nhúng trong dữ liệu
+- [ ] Kiểm thử hành vi prompt injection với provider thật trong Phase 8
 
 **Vận hành**
-- [ ] Ghi log lần gọi tool (tên tool, user id, thời gian). **Không** log nội dung nhạy cảm hoặc khóa API
-- [ ] API key chỉ qua biến môi trường; không commit lên git
+- [x] Ghi log lần gọi tool (tên tool, ID tài khoản, thời gian); **không** log nội dung yêu cầu, dữ liệu tool hay khóa API
+- [x] API key chỉ qua `AI_API_KEY`; file `.env` được Git ignore
 - [ ] Theo dõi thông báo bảo mật của Spring AI, cập nhật bản vá thường xuyên
 
 **Hoàn thành khi:** toàn bộ bộ test bảo mật ở Phase 8 qua; không có đường nào để Customer đọc dữ liệu của người khác hoặc gọi chức năng admin.
@@ -270,21 +277,21 @@ ChatController ──► ChatService ──► ChatClient (system prompt + advis
 **Mục tiêu:** UI chatbot cho cửa hàng và trang trợ lý cho admin.
 
 **Chatbot (cửa hàng)**
-- [ ] Fragment Thymeleaf `chat-widget.html` nhúng vào layout dùng chung
-- [ ] Nút chat nổi góc phải dưới, mở khung chat; có tiêu đề, danh sách tin nhắn, ô nhập, nút gửi
-- [ ] JS (`chat.js`): gửi `fetch` kèm CSRF token, hiển thị trạng thái "đang trả lời...", xử lý lỗi và nút thử lại
-- [ ] Render tin nhắn bằng `textContent` (**không** `innerHTML` với nội dung AI). Nếu hỗ trợ định dạng, chỉ cho phép in đậm, xuống dòng và link nội bộ dạng `/products/{id}`
-- [ ] Hướng dẫn model chèn link `/products/{id}` khi giới thiệu sản phẩm
-- [ ] Gợi ý nhanh (chips): "Tìm nồi chiên", "Chính sách đổi trả", "Kiểm tra đơn của tôi"
-- [ ] Responsive trên mobile, nút "Cuộc trò chuyện mới"
+- [x] Fragment Thymeleaf `chat-widget.html` nhúng vào layout dùng chung
+- [x] Nút chat nổi góc phải dưới, mở khung chat; có tiêu đề, danh sách tin nhắn, ô nhập, nút gửi
+- [x] JS (`chat.js`): gửi `fetch` kèm CSRF token, hiển thị trạng thái "đang trả lời...", xử lý lỗi và nút thử lại
+- [x] Render tin nhắn bằng `textContent` (**không** `innerHTML` với nội dung AI)
+- [x] Hướng dẫn model chỉ chèn link `/products/{id}` khi ID có sẵn trong ngữ cảnh, không tự đoán ID
+- [x] Gợi ý nhanh (chips): "Tìm nồi chiên", "Chính sách đổi trả", "Kiểm tra đơn của tôi"
+- [x] Responsive trên mobile, nút "Cuộc trò chuyện mới" (xóa nội dung đang hiển thị; bộ nhớ hội thoại phía máy chủ thuộc Phase 5)
 - [ ] (Tùy chọn) streaming bằng SSE
 
 **Assistant (admin)**
-- [ ] Trang `/admin/assistant` theo phong cách các trang admin hiện có
-- [ ] Câu hỏi gợi ý: "Sản phẩm nào sắp hết hàng?", "Doanh thu tháng này", "Top 5 sản phẩm bán chạy tuần qua"
-- [ ] Hiển thị kết quả dạng văn bản; danh sách nhiều dòng có thể render thành bảng đơn giản
+- [x] Trang `/admin/assistant` theo phong cách các trang admin hiện có
+- [x] Câu hỏi gợi ý: "Sản phẩm nào sắp hết hàng?", "Doanh thu tháng này", "Top 5 sản phẩm bán chạy tuần qua"
+- [x] Hiển thị kết quả dạng văn bản
 
-**Hoàn thành khi:** dùng được trên desktop và mobile, không có XSS khi AI trả về nội dung chứa HTML/script.
+**Hoàn thành khi:** dùng được trên desktop và mobile, không có XSS khi AI trả về nội dung chứa HTML/script. (Đã triển khai giao diện; cần kiểm thử thủ công trên trình duyệt.)
 **Ước lượng:** 2–3 ngày
 
 ---

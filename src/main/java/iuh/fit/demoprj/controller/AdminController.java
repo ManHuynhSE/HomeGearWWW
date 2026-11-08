@@ -28,6 +28,12 @@ public class AdminController {
         this.admin = admin;
     }
 
+    @GetMapping("/admin/assistant")
+    public String assistant(Model model) {
+        model.addAttribute("pageTitle", "Trợ lý AI | HomeGear");
+        return "admin-assistant";
+    }
+
     @GetMapping("/admin")
     public String dashboard(@RequestParam(required = false) Long editProduct,
                             @RequestParam(required = false) Long editCategory,
@@ -104,11 +110,13 @@ public class AdminController {
                               @RequestParam(defaultValue = "") String imageAttribution,
                               @RequestParam(defaultValue = "") String imageSourceUrl,
                               @RequestParam(defaultValue = "") String specificationText,
-                              @RequestParam Long categoryId, Model model) {
+                              @RequestParam Long categoryId,
+                              @RequestParam(required = false) Boolean active, Model model) {
         try {
+            boolean isActive = active != null ? active : id == null || catalog.getProduct(id).isActive();
             catalog.saveProduct(id, name, price, stock, originalPrice,
                     promotionStartsAt, promotionEndsAt, description, imageUrl,
-                    imageAttribution, imageSourceUrl, specificationText, categoryId);
+                    imageAttribution, imageSourceUrl, specificationText, categoryId, isActive);
             return "redirect:/admin?success=product";
         } catch (IllegalArgumentException ex) {
             String page = dashboard(id, null, null, null, null, null, null,

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head}"></head>
+<body class="admin-page">
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <a class="admin-brand" href="/admin"><span class="admin-brand-mark"><i class="bi bi-house-heart-fill"></i></span>HomeGear</a>
+    <div class="admin-nav-label">KHÔNG GIAN QUẢN TRỊ</div>
+    <nav class="admin-nav" aria-label="Điều hướng quản trị">
+      <a href="/admin"><i class="bi bi-grid-1x2-fill"></i><span>Tổng quan</span></a>
+      <a class="active" href="/admin/assistant" aria-current="page"><i class="bi bi-stars"></i><span>Trợ lý AI</span></a>
+      <a href="/admin#orders"><i class="bi bi-receipt"></i><span>Đơn hàng</span></a>
+      <a href="/admin#products"><i class="bi bi-box-seam"></i><span>Sản phẩm</span></a>
+      <a href="/admin#categories"><i class="bi bi-tags"></i><span>Danh mục</span></a>
+      <a href="/admin#customers"><i class="bi bi-people"></i><span>Khách hàng</span></a>
+    </nav>
+    <div class="admin-sidebar-bottom">
+      <div class="admin-account"><span class="admin-avatar"><i class="bi bi-person-fill"></i></span><span><strong>Quản trị viên</strong><small>ADMIN</small></span></div>
+      <form method="post" action="/logout">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <button class="admin-logout"><i class="bi bi-box-arrow-right"></i>Đăng xuất</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="admin-workspace">
+    <header class="admin-topbar">
+      <span class="admin-breadcrumb">HomeGear <i class="bi bi-chevron-right"></i> Trợ lý AI</span>
+      <a class="admin-store-link" href="/"><i class="bi bi-arrow-up-right-square"></i> Xem cửa hàng</a>
+    </header>
+    <main class="admin-content">
+      <div class="admin-heading">
+        <div><p class="admin-eyebrow">CÔNG CỤ QUẢN TRỊ</p><h1>Trợ lý AI</h1><p class="admin-subtitle">Đặt câu hỏi để thử nghiệm trợ lý quản trị HomeGear.</p></div>
+        <span class="admin-date"><i class="bi bi-shield-check"></i> CHỈ DÀNH CHO ADMIN</span>
+      </div>
+
+      <section class="admin-panel admin-assistant-panel" data-chat data-endpoint="/api/admin/assistant">
+        <div class="admin-panel-heading">
+          <div><h2><i class="bi bi-stars me-2 text-primary"></i>Cuộc trò chuyện</h2><p>Trợ lý có thể tra cứu số liệu hiện tại nhưng không tự thay đổi dữ liệu.</p></div>
+          <button type="button" class="admin-outline-btn" data-chat-new><i class="bi bi-arrow-clockwise me-1"></i>Cuộc trò chuyện mới</button>
+        </div>
+        <div class="admin-assistant-prompts" data-chat-suggestions>
+          <button type="button"><i class="bi bi-box-seam"></i>Sản phẩm nào sắp hết hàng?</button>
+          <button type="button"><i class="bi bi-graph-up"></i>Doanh thu tháng này</button>
+          <button type="button"><i class="bi bi-trophy"></i>Top 5 sản phẩm bán chạy tuần qua</button>
+        </div>
+        <div class="admin-assistant-messages" data-chat-messages role="log" aria-live="polite" aria-relevant="additions text"></div>
+        <form class="admin-assistant-form" data-chat-form>
+          <label class="visually-hidden" for="hg-admin-chat-input">Nhập câu hỏi cho trợ lý</label>
+          <textarea id="hg-admin-chat-input" class="form-control" name="message" rows="2" maxlength="500" placeholder="Nhập câu hỏi của bạn..." required></textarea>
+          <button class="admin-primary-btn" type="submit"><i class="bi bi-send-fill me-2"></i>Gửi</button>
+        </form>
+        <p class="admin-assistant-disclaimer"><i class="bi bi-info-circle me-1"></i>Trợ lý chỉ đọc dữ liệu cửa hàng và không thực hiện thay đổi.</p>
+      </section>
+    </main>
+  </div>
+</div>
+<script th:src="@{/js/chat.js}" defer></script>
+</body>
+</html>

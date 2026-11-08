@@ -24,7 +24,7 @@ class CartControllerTest {
     void addUsesRequestedQuantityAndReturnsToProductWhenAsked() {
         CatalogService catalog = mock(CatalogService.class);
         Product product = productWithId(25L, 5);
-        when(catalog.getProduct(25L)).thenReturn(product);
+        when(catalog.getActiveProduct(25L)).thenReturn(product);
         CartController controller = new CartController(catalog, mock(OrderService.class));
         MockHttpSession session = new MockHttpSession();
 
@@ -40,7 +40,7 @@ class CartControllerTest {
     void addRejectsQuantityAboveAvailableStockWithoutChangingCart() {
         CatalogService catalog = mock(CatalogService.class);
         Product product = productWithId(25L, 3);
-        when(catalog.getProduct(25L)).thenReturn(product);
+        when(catalog.getActiveProduct(25L)).thenReturn(product);
         CartController controller = new CartController(catalog, mock(OrderService.class));
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("cart", Map.of(25L, 2));

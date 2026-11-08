@@ -2,6 +2,7 @@ package iuh.fit.demoprj;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -39,7 +40,7 @@ class OrderServiceTest {
         CustomerOrder existingOrder = new CustomerOrder(customer, BigDecimal.valueOf(230_000));
 
         when(accounts.findByEmailIgnoreCase("customer@example.com")).thenReturn(Optional.of(customer));
-        when(products.findForCheckoutById(11L)).thenReturn(Optional.of(product));
+        when(products.findForCheckoutByIdAndActiveTrue(11L)).thenReturn(Optional.of(product));
         when(orders.findByCheckoutToken("checkout-token")).thenReturn(Optional.empty());
         when(orders.findForCheckoutTokenByCheckoutToken("checkout-token"))
                 .thenReturn(Optional.empty(), Optional.of(existingOrder));
@@ -56,5 +57,20 @@ class OrderServiceTest {
         assertSame(created, repeated);
         assertEquals(4, product.getStock());
         verify(orders, times(1)).save(any(CustomerOrder.class));
+    }
+
+    @Test
+    void customerOrderLookupScopesTheDatabaseQueryByAuthenticatedEmail() {
+        ProductRepository products = mock(ProductRepository.class);
+        CustomerOrderRepository orders = mock(CustomerOrderRepository.class);
+        UserAccountRepository accounts = mock(UserAccountRepository.class);
+        OrderService service = new OrderService(products, orders, accounts);
+        when(orders.findByIdAndCustomerEmailIgnoreCase(44L, "customer@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.findOrderForCustomer(44L, "customer@example.com"));
+
+        verify(orders).findByIdAndCustomerEmailIgnoreCase(44L, "customer@example.com");
     }
 }

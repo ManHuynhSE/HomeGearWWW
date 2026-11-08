@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="chatWidget" class="hg-chat" data-chat data-endpoint="/api/chat">
+  <section class="hg-chat-panel" id="hg-store-chat-panel" aria-label="Chat với HomeGear" hidden>
+    <header class="hg-chat-header">
+      <span class="hg-chat-avatar"><i class="bi bi-stars"></i></span>
+      <div class="hg-chat-heading"><strong>Tư vấn HomeGear</strong><small>Trợ lý mua sắm</small></div>
+      <button class="hg-chat-icon-button" type="button" data-chat-new aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới"><i class="bi bi-arrow-clockwise"></i></button>
+      <button class="hg-chat-icon-button" type="button" data-chat-close aria-label="Đóng chat"><i class="bi bi-x-lg"></i></button>
+    </header>
+    <div class="hg-chat-messages" data-chat-messages role="log" aria-live="polite" aria-relevant="additions text"></div>
+    <div class="hg-chat-suggestions" data-chat-suggestions>
+      <button type="button">Tìm nồi chiên</button>
+      <button type="button">Chính sách đổi trả</button>
+      <button type="button">Kiểm tra đơn của tôi</button>
+    </div>
+    <form class="hg-chat-form" data-chat-form>
+      <label class="visually-hidden" for="hg-store-chat-input">Nhập câu hỏi</label>
+      <input id="hg-store-chat-input" class="form-control" type="text" name="message" maxlength="500" placeholder="Hỏi HomeGear..." autocomplete="off" required>
+      <button class="hg-chat-send" type="submit" aria-label="Gửi tin nhắn"><i class="bi bi-send-fill"></i></button>
+    </form>
+    <p class="hg-chat-note">Trợ lý có thể chưa tra cứu được thông tin đơn hàng hoặc tồn kho.</p>
+  </section>
+  <button class="hg-chat-launcher" type="button" aria-controls="hg-store-chat-panel" aria-expanded="false">
+    <i class="bi bi-chat-dots-fill"></i><span>Chat với chúng tôi</span>
+  </button>
+</div>
+</body>
+</html>

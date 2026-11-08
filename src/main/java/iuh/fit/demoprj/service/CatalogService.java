@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +26,14 @@ public class CatalogService {
     private final ProductRepository products;
     private final CategoryRepository categories;
     private final OrderItemRepository orderItems;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CatalogService(ProductRepository products, CategoryRepository categories,
-                          OrderItemRepository orderItems) {
+                          OrderItemRepository orderItems, ApplicationEventPublisher eventPublisher) {
         this.products = products;
         this.categories = categories;
         this.orderItems = orderItems;
+        this.eventPublisher = eventPublisher;
     }
 
     public List<Product> search(String keyword) {
@@ -39,8 +42,44 @@ public class CatalogService {
     }
 
     public List<Product> searchSuggestions(String keyword) {
-        return products.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
-                keyword, keyword, PageRequest.of(0, 7));
+        return products.findActiveSuggestions(
+                keyword, PageRequest.of(0, 7));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> searchProductsForAssistant(String keyword, String categoryName,
+                                                     BigDecimal minPrice, BigDecimal maxPrice) {
+        if (minPrice != null && minPrice.signum() < 0
+                || maxPrice != null && maxPrice.signum() < 0
+                || minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            throw new IllegalArgumentException("Khoảng giá không hợp lệ.");
+        }
+        Long categoryId = null;
+        if (categoryName != null && !categoryName.isBlank()) {
+            Category category = categories.findByNameIgnoreCase(categoryName.trim()).orElse(null);
+            if (category == null) return List.of();
+            categoryId = category.getId();
+        }
+        Page<Product> page = searchCatalog(keyword, categoryId, minPrice, maxPrice,
+                false, "newest", 0, 10);
+        return page.getContent();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> findLowStockProducts(int threshold) {
+        if (threshold < 0 || threshold > 100) {
+            throw new IllegalArgumentException("Ngưỡng tồn kho phải từ 0 đến 100.");
+        }
+        return products.findTop20ByActiveTrueAndStockLessThanEqualOrderByStockAscIdAsc(threshold);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryProductCount> countProductsByCategory() {
+        return categories.findAll().stream()
+                .limit(20)
+                .map(category -> new CategoryProductCount(category.getName(),
+                        products.countByCategoryId(category.getId())))
+                .toList();
     }
 
     public Page<Product> searchCatalog(String keyword, Long categoryId, BigDecimal minPrice,
@@ -71,16 +110,29 @@ public class CatalogService {
     }
 
     public List<Product> getNewArrivals() {
-        return products.findTop6ByOrderByIdDesc();
+        return products.findTop6ByActiveTrueOrderByIdDesc();
     }
 
     public List<Product> getActivePromotions(LocalDateTime now) {
-        return products.findByOriginalPriceIsNotNullAndPromotionStartsAtLessThanEqualAndPromotionEndsAtGreaterThanOrderByPromotionEndsAtAsc(
+        return products.findByActiveTrueAndOriginalPriceIsNotNullAndPromotionStartsAtLessThanEqualAndPromotionEndsAtGreaterThanOrderByPromotionEndsAtAsc(
                 now, now);
     }
 
     public Product getProduct(Long id) {
         return products.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm."));
+    }
+
+    public Product getActiveProduct(Long id) {
+        return products.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại hoặc đã ngừng kinh doanh."));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> findActiveProductsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return products.findByIdInAndActiveTrue(ids);
     }
 
     @Transactional(readOnly = true)
@@ -100,7 +152,7 @@ public class CatalogService {
     }
 
     public List<Product> getRelatedProducts(Product product) {
-        return products.findTop4ByCategory_IdAndIdNotOrderByIdDesc(
+        return products.findTop4ByCategory_IdAndActiveTrueAndIdNotOrderByIdDesc(
                 product.getCategory().getId(), product.getId());
     }
 
@@ -127,7 +179,9 @@ public class CatalogService {
         }
         Category category = id == null ? new Category(normalizedName) : getCategory(id);
         category.setName(normalizedName);
-        return categories.save(category);
+        Category saved = categories.save(category);
+        eventPublisher.publishEvent(new CategoryCatalogChangedEvent(saved.getId()));
+        return saved;
     }
 
     @Transactional
@@ -145,6 +199,17 @@ public class CatalogService {
                                LocalDateTime promotionEndsAt, String description,
                                String imageUrl, String imageAttribution, String imageSourceUrl,
                                String specificationText, Long categoryId) {
+        return saveProduct(id, name, price, stock, originalPrice, promotionStartsAt,
+                promotionEndsAt, description, imageUrl, imageAttribution, imageSourceUrl,
+                specificationText, categoryId, true);
+    }
+
+    @Transactional
+    public Product saveProduct(Long id, String name, java.math.BigDecimal price, int stock,
+                               java.math.BigDecimal originalPrice, LocalDateTime promotionStartsAt,
+                               LocalDateTime promotionEndsAt, String description,
+                               String imageUrl, String imageAttribution, String imageSourceUrl,
+                               String specificationText, Long categoryId, boolean active) {
         String normalizedName = name == null ? "" : name.trim();
         if (normalizedName.isBlank() || price == null || price.signum() <= 0 || stock < 0) {
             throw new IllegalArgumentException("Tên bắt buộc; giá phải lớn hơn 0; tồn kho không được âm.");
@@ -171,6 +236,7 @@ public class CatalogService {
         product.setPromotionStartsAt(promotionStartsAt);
         product.setPromotionEndsAt(promotionEndsAt);
         product.setStock(stock);
+        product.setActive(active);
         product.setDescription(description == null ? "" : description.trim());
         product.setImageUrl(normalizeImageUrl(imageUrl));
         String normalizedAttribution = imageAttribution == null || imageAttribution.isBlank()
@@ -183,7 +249,9 @@ public class CatalogService {
         product.setImageSourceUrl(normalizedImageSourceUrl);
         product.setSpecifications(specifications);
         product.setCategory(category);
-        return products.save(product);
+        Product saved = products.save(product);
+        eventPublisher.publishEvent(new ProductCatalogChangedEvent(saved.getId()));
+        return saved;
     }
 
     private List<ProductSpecification> parseSpecifications(String text) {
@@ -241,6 +309,9 @@ public class CatalogService {
         throw new IllegalArgumentException("Ảnh sản phẩm phải là đường dẫn nội bộ hoặc URL HTTPS hợp lệ.");
     }
 
+    public record CategoryProductCount(String categoryName, long productCount) {
+    }
+
     @Transactional
     public void deleteProduct(Long id, iuh.fit.demoprj.repository.OrderItemRepository orderItems) {
         getProduct(id);
@@ -248,6 +319,7 @@ public class CatalogService {
             throw new IllegalArgumentException("Sản phẩm đã có trong đơn hàng, không thể xóa.");
         }
         products.deleteById(id);
+        eventPublisher.publishEvent(new ProductCatalogChangedEvent(id));
     }
 }
 
