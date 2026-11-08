@@ -6,6 +6,8 @@ The dev and production profiles use Google's `gemini-embedding-001` embedding mo
 
 Changing the embedding model or its dimensions requires creating a compatible vector table and reindexing all product and policy documents. Use the admin-only `POST /admin/ai/reindex` endpoint after deployment or policy changes. Product and category updates are synchronized after the database transaction commits. Product documents use a stable `product-{id}` key in metadata; MariaDB Vector Store requires physical document IDs to be UUIDs, so those IDs are deterministic UUIDs derived from the key. The vector table uses MariaDB's native vector index; no stored routines, functions, or check constraints are added.
 
+On startup with the MariaDB vector store enabled, the application checks for at least one row in the configured vector table. If it is empty, the product and policy ETL starts in the background; a populated table is left untouched.
+
 Store chat retrieves up to four policy chunks on every turn using a 0.65 similarity threshold. This improves policy grounding but adds an embedding/search operation per turn and can add irrelevant context; if that trade-off proves costly or noisy, replace the always-on advisor with an on-demand `searchPolicy` tool.
 
 The opt-in live semantic-search and policy-RAG smoke test is documented in `AI_INTEGRATION_PLAN.md`. It reindexes the local catalog and calls the configured Google AI provider, so it consumes API quota.

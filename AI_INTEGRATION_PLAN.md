@@ -184,6 +184,7 @@ ChatController ──► ChatService ──► ChatClient (system prompt + advis
 ### 3.4 Đồng bộ
 
 - [x] `VectorIndexService` với `reindexAll()`, `indexProduct(id)`, `removeProduct(id)`
+- [x] Tự chạy ETL sản phẩm/chính sách khi khởi động nếu bảng vector chưa có dòng nào; bỏ qua nếu bảng đã có dữ liệu
 - [x] Cập nhật bằng cách **xóa rồi thêm lại** theo id để tránh trùng
 - [x] Phát sự kiện từ `CatalogService` khi thêm/sửa/xóa/đổi trạng thái; lắng nghe bằng `@TransactionalEventListener(phase = AFTER_COMMIT)` để chỉ đồng bộ vector sau khi CSDL commit thành công
 - [x] Lỗi đồng bộ vector không được làm hỏng thao tác của Admin: ghi log và cho phép chạy lại
