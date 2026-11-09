@@ -2,6 +2,8 @@ package iuh.fit.demoprj;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import iuh.fit.demoprj.ai.tools.AdminTools;
@@ -10,6 +12,10 @@ import iuh.fit.demoprj.model.entity.Category;
 import iuh.fit.demoprj.model.entity.Product;
 import iuh.fit.demoprj.service.AdminService;
 import iuh.fit.demoprj.service.CatalogService;
+import iuh.fit.demoprj.tracking.model.EngagementMetric;
+import iuh.fit.demoprj.tracking.model.ProductEngagement;
+import iuh.fit.demoprj.tracking.model.TrackingFunnel;
+import iuh.fit.demoprj.tracking.service.AnalyticsService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,6 +33,8 @@ class AdminToolsTest {
     @Mock
     private AdminService admin;
     @Mock
+    private AnalyticsService analytics;
+    @Mock
     private AiToolInvocationLogger invocationLogger;
 
     private AdminTools tools;
@@ -36,7 +44,7 @@ class AdminToolsTest {
 
     @BeforeEach
     void setUp() {
-        tools = new AdminTools(catalog, admin, invocationLogger);
+        tools = new AdminTools(catalog, admin, analytics, invocationLogger);
         product = new Product("Quạt", BigDecimal.valueOf(250_000), 3,
                 "Quạt gia đình", new Category("Điện tử"));
     }
@@ -110,5 +118,51 @@ class AdminToolsTest {
         assertNull(result.data());
         assertEquals("Vui lòng cung cấp khoảng ngày ISO hợp lệ, ngày kết thúc không trước ngày bắt đầu.",
                 result.message());
+    }
+
+    @Test
+    void topViewedProductsUsesInclusiveIsoDatesAndDefaultMetricAndLimit() {
+        ProductEngagement engagement = new ProductEngagement(
+                12L, "Quạt", "/images/fan.jpg", 20, 4, 2, 10, 1, BigDecimal.valueOf(5));
+        when(analytics.getTopProducts(from.atStartOfDay(), to.plusDays(1).atStartOfDay(),
+                5, EngagementMetric.SCORE)).thenReturn(List.of(engagement));
+
+        var result = tools.getTopViewedProducts(from, to, null, null);
+
+        assertEquals(List.of(engagement), result.data());
+        verify(analytics).getTopProducts(from.atStartOfDay(), to.plusDays(1).atStartOfDay(),
+                5, EngagementMetric.SCORE);
+    }
+
+    @Test
+    void productEngagementReturnsOneExactProductAggregate() {
+        ProductEngagement engagement = new ProductEngagement(
+                12L, "Quạt", null, 20, 4, 2, 10, 1, BigDecimal.valueOf(5));
+        when(analytics.getProductEngagement("Quạt", from.atStartOfDay(), to.plusDays(1).atStartOfDay()))
+                .thenReturn(List.of(engagement));
+
+        var result = tools.getProductEngagement("Quạt", from, to);
+
+        assertEquals(engagement, result.data());
+    }
+
+    @Test
+    void engagementFunnelUsesAnalyticsService() {
+        TrackingFunnel funnel = new TrackingFunnel(20, 4, 2);
+        when(analytics.getFunnel(from.atStartOfDay(), to.plusDays(1).atStartOfDay())).thenReturn(funnel);
+
+        var result = tools.getEngagementFunnel(from, to);
+
+        assertEquals(funnel, result.data());
+    }
+
+    @Test
+    void analyticsToolsRejectMissingDatesBeforeCallingService() {
+        var topProducts = tools.getTopViewedProducts(null, to, 5, EngagementMetric.VIEWS);
+        var funnel = tools.getEngagementFunnel(from, null);
+
+        assertEquals(List.of(), topProducts.data());
+        assertNull(funnel.data());
+        verifyNoInteractions(analytics);
     }
 }

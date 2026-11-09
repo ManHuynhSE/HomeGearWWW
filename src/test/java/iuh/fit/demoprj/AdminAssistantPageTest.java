@@ -18,6 +18,7 @@ import iuh.fit.demoprj.tracking.model.EventType;
 import iuh.fit.demoprj.tracking.model.ProductEvent;
 import iuh.fit.demoprj.tracking.repository.ProductEventRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
@@ -175,5 +176,8 @@ class AdminAssistantPageTest {
     @WithMockUser(roles = "CUSTOMER")
     void customerCannotInvokeAdminToolDirectly() {
         assertThrows(AccessDeniedException.class, adminTools::countProductsByCategory);
+        assertThrows(AccessDeniedException.class,
+                () -> adminTools.getEngagementFunnel(
+                        LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 7)));
     }
 }

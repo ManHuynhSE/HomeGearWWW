@@ -252,13 +252,13 @@ Bổ sung vào `AdminTools` và `StoreTools` (xem `AI_INTEGRATION_PLAN.md`, Phas
 | `getTrendingProducts` | Chatbot (khách) | limit | Sản phẩm đang được quan tâm, chỉ số tổng hợp, còn hàng |
 | `getMyRecentlyViewed` | Chatbot (khách đã đăng nhập) | limit | Sản phẩm người này xem gần đây |
 
-- [ ] Admin tools có `@PreAuthorize("hasRole('ADMIN')")` ở tầng service
-- [ ] `getMyRecentlyViewed` **không nhận userId từ tham số**, lấy từ `SecurityContext`; Guest thì trả thông điệp cần đăng nhập
-- [ ] Tool của khách chỉ trả số liệu **đã gộp**, tuyệt đối không có sự kiện của người khác hay `session_hash`
-- [ ] Ngày tháng nhận định dạng ISO; thiếu khoảng thời gian thì AI hỏi lại (đã có trong system prompt của Assistant)
-- [ ] Cập nhật system prompt: giải thích định nghĩa số liệu (điểm = click × 1 + thêm giỏ × 3, mặc định 7 ngày) để AI giải thích đúng khi được hỏi, và dặn AI không tự suy diễn khi chưa có dữ liệu
-- [ ] Giới hạn số dòng trả về (tối đa 10–20)
-- [ ] Unit test từng tool (service mock) và test phân quyền
+- [x] Admin tools có `@PreAuthorize("hasRole('ADMIN')")` ở tầng service
+- [x] `getMyRecentlyViewed` **không nhận userId từ tham số**, lấy từ `SecurityContext`; Guest thì trả thông điệp cần đăng nhập
+- [x] Tool của khách chỉ trả số liệu **đã gộp**, tuyệt đối không có sự kiện của người khác hay `session_hash`
+- [x] Ngày tháng nhận định dạng ISO; thiếu khoảng thời gian thì AI hỏi lại (đã có trong system prompt của Assistant)
+- [x] Cập nhật system prompt: giải thích định nghĩa số liệu (điểm = click × 1 + thêm giỏ × 3, mặc định 7 ngày) để AI giải thích đúng khi được hỏi, và dặn AI không tự suy diễn khi chưa có dữ liệu
+- [x] Giới hạn số dòng trả về (tối đa 10–20)
+- [x] Unit test từng tool (service mock) và test phân quyền
 
 **Hoàn thành khi:** admin hỏi "Top 5 sản phẩm được quan tâm tuần này" nhận đúng danh sách khớp dashboard; khách hỏi "sản phẩm nào đang hot" nhận kết quả hợp lệ; Guest hỏi "tôi xem gì gần đây" được yêu cầu đăng nhập.
 **Ước lượng:** 1 ngày

@@ -6,6 +6,8 @@ import iuh.fit.demoprj.model.entity.Product;
 import iuh.fit.demoprj.model.entity.ProductSpecification;
 import iuh.fit.demoprj.service.CatalogService;
 import iuh.fit.demoprj.service.OrderService;
+import iuh.fit.demoprj.tracking.model.ProductEngagement;
+import iuh.fit.demoprj.tracking.service.AnalyticsService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,14 +22,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class StoreTools {
     private static final int MAX_ORDER_ITEMS = 10;
+    private static final int MAX_ANALYTICS_RESULTS = 10;
 
     private final CatalogService catalog;
     private final OrderService orders;
+    private final AnalyticsService analytics;
     private final AiToolInvocationLogger invocationLogger;
 
-    public StoreTools(CatalogService catalog, OrderService orders, AiToolInvocationLogger invocationLogger) {
+    public StoreTools(CatalogService catalog, OrderService orders, AnalyticsService analytics,
+                      AiToolInvocationLogger invocationLogger) {
         this.catalog = catalog;
         this.orders = orders;
+        this.analytics = analytics;
         this.invocationLogger = invocationLogger;
     }
 
@@ -124,6 +130,46 @@ public class StoreTools {
         }
     }
 
+    @Tool(name = "getTrendingProducts", description = """
+            Tìm tối đa 10 sản phẩm đang được quan tâm trong 7 ngày gần nhất.
+            Danh sách chỉ gồm sản phẩm đang hoạt động và còn hàng; số liệu là tổng hợp,
+            không chứa lịch sử hay dữ liệu nhận dạng khách hàng.
+            """)
+    public ToolResult<List<ProductEngagement>> getTrendingProducts(
+            @ToolParam(description = "Số lượng kết quả từ 1 đến 10, mặc định 5", required = false) Integer limit) {
+        invocationLogger.logInvocation("getTrendingProducts");
+        int resultLimit = limit == null ? 5 : limit;
+        if (resultLimit < 1 || resultLimit > MAX_ANALYTICS_RESULTS) {
+            return new ToolResult<>("Số lượng kết quả phải từ 1 đến 10.", List.of());
+        }
+        List<ProductEngagement> trending = analytics.getTrendingProducts(resultLimit);
+        return new ToolResult<>(trending.isEmpty() ? "Chưa có đủ dữ liệu để xác định sản phẩm đang được quan tâm."
+                : "Sản phẩm đang được quan tâm và còn hàng.", trending);
+    }
+
+    @Tool(name = "getMyRecentlyViewed", description = """
+            Lấy tối đa 10 sản phẩm đang hoạt động mà khách hàng hiện đăng nhập đã xem gần đây.
+            Không nhận userId, email hoặc thông tin tài khoản; khách chưa đăng nhập phải được hướng dẫn đăng nhập.
+            """)
+    public ToolResult<List<RecentlyViewedProduct>> getMyRecentlyViewed(
+            @ToolParam(description = "Số lượng kết quả từ 1 đến 10, mặc định 5", required = false) Integer limit) {
+        invocationLogger.logInvocation("getMyRecentlyViewed");
+        if (currentCustomerEmail() == null) {
+            return new ToolResult<>("Vui lòng đăng nhập bằng tài khoản khách hàng để xem sản phẩm đã xem gần đây.",
+                    List.of());
+        }
+        int resultLimit = limit == null ? 5 : limit;
+        if (resultLimit < 1 || resultLimit > MAX_ANALYTICS_RESULTS) {
+            return new ToolResult<>("Số lượng kết quả phải từ 1 đến 10.", List.of());
+        }
+        List<RecentlyViewedProduct> recentlyViewed = analytics.getRecentlyViewed(resultLimit).stream()
+                .map(product -> new RecentlyViewedProduct(
+                        product.getId(), product.getName(), product.getCanonicalPath()))
+                .toList();
+        return new ToolResult<>(recentlyViewed.isEmpty() ? "Bạn chưa có sản phẩm nào được xem gần đây."
+                : "Sản phẩm bạn đã xem gần đây.", recentlyViewed);
+    }
+
     private String currentCustomerEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
@@ -186,5 +232,8 @@ public class StoreTools {
     }
 
     public record OrderLine(String productName, int quantity, BigDecimal unitPrice) {
+    }
+
+    public record RecentlyViewedProduct(Long id, String name, String productPath) {
     }
 }

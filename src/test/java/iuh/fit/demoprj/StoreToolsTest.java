@@ -15,6 +15,8 @@ import iuh.fit.demoprj.model.entity.UserAccount;
 import iuh.fit.demoprj.model.enums.Role;
 import iuh.fit.demoprj.service.CatalogService;
 import iuh.fit.demoprj.service.OrderService;
+import iuh.fit.demoprj.tracking.model.ProductEngagement;
+import iuh.fit.demoprj.tracking.service.AnalyticsService;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -35,6 +37,8 @@ class StoreToolsTest {
     @Mock
     private OrderService orders;
     @Mock
+    private AnalyticsService analytics;
+    @Mock
     private AiToolInvocationLogger invocationLogger;
 
     private StoreTools tools;
@@ -42,7 +46,7 @@ class StoreToolsTest {
 
     @BeforeEach
     void setUp() {
-        tools = new StoreTools(catalog, orders, invocationLogger);
+        tools = new StoreTools(catalog, orders, analytics, invocationLogger);
         product = new Product("Nồi chiên", BigDecimal.valueOf(1_500_000), 4,
                 "Nồi chiên gia đình", new Category("Nhà bếp"));
         ReflectionTestUtils.setField(product, "id", 12L);
@@ -80,7 +84,7 @@ class StoreToolsTest {
         var result = tools.compareProducts(List.of(12L));
 
         assertEquals(List.of(), result.data());
-        verifyNoInteractions(catalog, orders);
+        verifyNoInteractions(catalog, orders, analytics);
     }
 
     @Test
@@ -146,6 +150,42 @@ class StoreToolsTest {
 
         assertEquals("Không tìm thấy đơn hàng thuộc tài khoản của bạn.", result.message());
         assertNull(result.data());
+    }
+
+    @Test
+    void trendingProductsComeFromAggregateAnalyticsService() {
+        ProductEngagement engagement = new ProductEngagement(
+                12L, "Nồi chiên", null, 20, 4, 2, 10, 1, BigDecimal.valueOf(5));
+        when(analytics.getTrendingProducts(3)).thenReturn(List.of(engagement));
+
+        var result = tools.getTrendingProducts(3);
+
+        assertEquals(List.of(engagement), result.data());
+        assertEquals("Sản phẩm đang được quan tâm và còn hàng.", result.message());
+        verify(analytics).getTrendingProducts(3);
+    }
+
+    @Test
+    void guestCannotReadRecentlyViewedProducts() {
+        var result = tools.getMyRecentlyViewed(null);
+
+        assertEquals("Vui lòng đăng nhập bằng tài khoản khách hàng để xem sản phẩm đã xem gần đây.",
+                result.message());
+        assertEquals(List.of(), result.data());
+        verifyNoInteractions(analytics);
+    }
+
+    @Test
+    void customerRecentlyViewedUsesSecurityContextAndReturnsSafeProductSummary() {
+        authenticateCustomer();
+        when(analytics.getRecentlyViewed(5)).thenReturn(List.of(product));
+
+        var result = tools.getMyRecentlyViewed(null);
+
+        assertEquals(12L, result.data().get(0).id());
+        assertEquals("Nồi chiên", result.data().get(0).name());
+        assertEquals("/san-pham/noi-chien-12", result.data().get(0).productPath());
+        verify(analytics).getRecentlyViewed(5);
     }
 
     private void authenticateCustomer() {
