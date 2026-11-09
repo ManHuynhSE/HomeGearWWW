@@ -34,7 +34,7 @@ public class SecurityConfig {
         http.userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/products", "/products/**", "/register",
-                                "/css/**", "/error","/api/chat/**").permitAll()
+                                "/css/**", "/error", "/api/chat/**", "/api/track").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/checkout", "/checkout/**", "/orders/**", "/account/**")

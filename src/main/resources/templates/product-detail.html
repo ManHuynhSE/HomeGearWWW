@@ -142,7 +142,7 @@
     </div>
     <div class="row g-3">
       <div class="col-sm-6 col-lg-3" th:each="relatedProduct : ${relatedProducts}">
-        <div th:replace="~{fragments :: productCard(${relatedProduct})}"></div>
+        <div th:replace="~{fragments :: productCard(${relatedProduct}, 'DETAIL')}"></div>
       </div>
     </div>
   </section>

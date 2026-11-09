@@ -3,6 +3,12 @@ package iuh.fit.demoprj.controller;
 import iuh.fit.demoprj.model.entity.Product;
 import iuh.fit.demoprj.service.CatalogService;
 import iuh.fit.demoprj.service.OrderService;
+import iuh.fit.demoprj.tracking.model.EventSource;
+import iuh.fit.demoprj.tracking.model.EventType;
+import iuh.fit.demoprj.tracking.service.TrackingContext;
+import iuh.fit.demoprj.tracking.service.TrackingContextFactory;
+import iuh.fit.demoprj.tracking.service.TrackingService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,6 +32,8 @@ public class CartController {
     private static final String CHECKOUT_TOKEN = "checkoutToken";
     private final CatalogService catalog;
     private final OrderService orders;
+    private final TrackingService tracking;
+    private final TrackingContextFactory trackingContextFactory;
 
     @Value("${homegear.shipping.free-threshold:500000}")
     private BigDecimal freeShippingThreshold;
@@ -36,9 +44,12 @@ public class CartController {
     @Value("${homegear.store.payment.cod-enabled:false}")
     private boolean codEnabled;
 
-    public CartController(CatalogService catalog, OrderService orders) {
+    public CartController(CatalogService catalog, OrderService orders,
+                          TrackingService tracking, TrackingContextFactory trackingContextFactory) {
         this.catalog = catalog;
         this.orders = orders;
+        this.tracking = tracking;
+        this.trackingContextFactory = trackingContextFactory;
     }
 
     @SuppressWarnings("unchecked")
@@ -49,7 +60,8 @@ public class CartController {
     @PostMapping("/cart/add/{id}")
     public String add(@PathVariable Long id, @RequestParam(defaultValue = "1") int quantity,
                       @RequestParam(defaultValue = "cart") String intent,
-                      HttpSession session, RedirectAttributes redirectAttributes) {
+                      HttpSession session, RedirectAttributes redirectAttributes,
+                      Authentication authentication, HttpServletRequest request) {
         boolean returnToDetail = "detail".equals(intent);
         if (!returnToDetail && !"cart".equals(intent)) {
             throw new IllegalArgumentException("Thao tác giỏ hàng không hợp lệ.");
@@ -76,6 +88,10 @@ public class CartController {
         }
         cart.put(id, (int) next);
         session.setAttribute(CART, cart);
+        TrackingContext trackingContext = trackingContextFactory.create(
+                authentication, session.getId(), request.getHeader("User-Agent"));
+        tracking.record(id, EventType.ADD_TO_CART,
+                returnToDetail ? EventSource.DETAIL : EventSource.LISTING, trackingContext);
         redirectAttributes.addFlashAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng.");
         if (returnToDetail) {
             return "redirect:" + product.getCanonicalPath();

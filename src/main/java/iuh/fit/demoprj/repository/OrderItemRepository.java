@@ -38,6 +38,17 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             @Param("to") LocalDateTime to,
             Pageable pageable);
 
+    @Query("""
+            select item.product.id as productId, sum(item.quantity) as purchasedQuantity
+            from OrderItem item
+            where item.order.status <> 'CANCELLED'
+              and item.order.createdAt >= :from
+              and item.order.createdAt < :to
+            group by item.product.id
+            """)
+    List<ProductPurchaseProjection> sumPurchasedQuantityBetween(
+            @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
     @Query(value = """
             select item.product
             from OrderItem item
@@ -76,5 +87,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     interface ProductSalesProjection {
         Product getProduct();
         Long getUnitsSold();
+    }
+
+    interface ProductPurchaseProjection {
+        Long getProductId();
+        Long getPurchasedQuantity();
     }
 }

@@ -66,7 +66,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByActiveTrueAndOriginalPriceIsNotNullAndPromotionStartsAtLessThanEqualAndPromotionEndsAtGreaterThanOrderByPromotionEndsAtAsc(
             LocalDateTime start, LocalDateTime end);
     Optional<Product> findByIdAndActiveTrue(Long id);
+    boolean existsByIdAndActiveTrue(Long id);
     List<Product> findByIdInAndActiveTrue(List<Long> ids);
+    List<Product> findByIdInAndActiveTrueAndStockGreaterThan(List<Long> ids, int stock);
+    List<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
     boolean existsByNameIgnoreCaseAndCategoryId(String name, Long categoryId);
     boolean existsByNameIgnoreCaseAndCategoryIdAndIdNot(String name, Long categoryId, Long id);
     boolean existsByCategoryId(Long categoryId);

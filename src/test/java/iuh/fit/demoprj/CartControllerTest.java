@@ -6,6 +6,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import iuh.fit.demoprj.controller.CartController;
+import iuh.fit.demoprj.tracking.model.EventSource;
+import iuh.fit.demoprj.tracking.model.EventType;
+import iuh.fit.demoprj.tracking.service.TrackingContext;
+import iuh.fit.demoprj.tracking.service.TrackingContextFactory;
+import iuh.fit.demoprj.tracking.service.TrackingService;
 import iuh.fit.demoprj.model.entity.Category;
 import iuh.fit.demoprj.model.entity.Product;
 import iuh.fit.demoprj.service.CatalogService;
@@ -14,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
@@ -23,43 +29,55 @@ class CartControllerTest {
     @Test
     void addUsesRequestedQuantityAndReturnsToProductWhenAsked() {
         CatalogService catalog = mock(CatalogService.class);
+        TrackingService tracking = mock(TrackingService.class);
+        TrackingContextFactory contextFactory = mock(TrackingContextFactory.class);
         Product product = productWithId(25L, 5);
         when(catalog.getActiveProduct(25L)).thenReturn(product);
-        CartController controller = new CartController(catalog, mock(OrderService.class));
+        CartController controller = new CartController(catalog, mock(OrderService.class), tracking, contextFactory);
         MockHttpSession session = new MockHttpSession();
+        TrackingContext context = new TrackingContext(null, "a".repeat(64), false, false);
+        when(contextFactory.create(null, session.getId(), null)).thenReturn(context);
 
-        String redirect = controller.add(25L, 3, "detail", session, new RedirectAttributesModelMap());
+        String redirect = controller.add(25L, 3, "detail", session,
+                new RedirectAttributesModelMap(), null, new MockHttpServletRequest());
 
         assertEquals("redirect:/san-pham/bo-am-nuoc-25", redirect);
         Object cart = session.getAttribute("cart");
         assertTrue(cart instanceof Map<?, ?>);
         assertEquals(3, ((Map<?, ?>) cart).get(25L));
+        org.mockito.Mockito.verify(tracking).record(25L, EventType.ADD_TO_CART, EventSource.DETAIL, context);
     }
 
     @Test
     void addRejectsQuantityAboveAvailableStockWithoutChangingCart() {
         CatalogService catalog = mock(CatalogService.class);
+        TrackingService tracking = mock(TrackingService.class);
+        TrackingContextFactory contextFactory = mock(TrackingContextFactory.class);
         Product product = productWithId(25L, 3);
         when(catalog.getActiveProduct(25L)).thenReturn(product);
-        CartController controller = new CartController(catalog, mock(OrderService.class));
+        CartController controller = new CartController(catalog, mock(OrderService.class), tracking, contextFactory);
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("cart", Map.of(25L, 2));
         RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
 
-        String redirect = controller.add(25L, 2, "cart", session, redirectAttributes);
+        String redirect = controller.add(25L, 2, "cart", session,
+                redirectAttributes, null, new MockHttpServletRequest());
 
         assertEquals("redirect:/cart", redirect);
         assertEquals(Map.of(25L, 2), session.getAttribute("cart"));
         assertTrue(redirectAttributes.getFlashAttributes().containsKey("cartError"));
+        org.mockito.Mockito.verifyNoInteractions(tracking, contextFactory);
     }
 
     @Test
     void checkoutPreviewCalculatesFlatAndFreeShippingTotals() {
         CatalogService catalog = mock(CatalogService.class);
+        TrackingService tracking = mock(TrackingService.class);
+        TrackingContextFactory contextFactory = mock(TrackingContextFactory.class);
         Product product = productWithId(25L, 10);
         ReflectionTestUtils.setField(product, "price", BigDecimal.valueOf(200_000));
         when(catalog.getProduct(25L)).thenReturn(product);
-        CartController controller = new CartController(catalog, mock(OrderService.class));
+        CartController controller = new CartController(catalog, mock(OrderService.class), tracking, contextFactory);
         ReflectionTestUtils.setField(controller, "freeShippingThreshold", BigDecimal.valueOf(500_000));
         ReflectionTestUtils.setField(controller, "shippingFlatFee", BigDecimal.valueOf(30_000));
         MockHttpSession session = new MockHttpSession();

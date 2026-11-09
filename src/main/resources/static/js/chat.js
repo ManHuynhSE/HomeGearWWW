@@ -1,8 +1,39 @@
 (() => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  const productLinkPattern = /\[([^\]\r\n]+)\]\(\/products\/([1-9]\d*)\)|(^|[\s(])\/products\/([1-9]\d*)(?![A-Za-z0-9/?#-])/g;
+
+  const addAssistantMessage = (body, text, trackProducts) => {
+    if (!trackProducts) {
+      body.textContent = text;
+      return;
+    }
+
+    let lastIndex = 0;
+    let match;
+    while ((match = productLinkPattern.exec(text)) !== null) {
+      const leadingText = match[3] || "";
+      const linkStart = match.index + leadingText.length;
+      const productId = match[2] || match[4];
+      const numericId = Number(productId);
+      if (!Number.isSafeInteger(numericId)) continue;
+
+      body.append(document.createTextNode(text.slice(lastIndex, linkStart)));
+      const link = document.createElement("a");
+      link.href = `/products/${productId}`;
+      link.dataset.track = "PRODUCT_CLICK";
+      link.dataset.productId = productId;
+      link.dataset.source = "CHATBOT";
+      link.textContent = match[1] || `/products/${productId}`;
+      body.append(link);
+      lastIndex = productLinkPattern.lastIndex;
+    }
+    body.append(document.createTextNode(text.slice(lastIndex)));
+    productLinkPattern.lastIndex = 0;
+  };
 
   document.querySelectorAll("[data-chat]").forEach(chat => {
     const endpoint = chat.dataset.endpoint;
+    const trackProducts = endpoint === "/api/chat";
     const messages = chat.querySelector("[data-chat-messages]");
     const form = chat.querySelector("[data-chat-form]");
     const input = form?.querySelector("[name='message']");
@@ -13,7 +44,11 @@
       item.className = `hg-chat-message hg-chat-message-${sender}`;
       const body = document.createElement("p");
       body.className = "hg-chat-message-body";
-      body.textContent = text;
+      if (sender === "assistant") {
+        addAssistantMessage(body, text, trackProducts);
+      } else {
+        body.textContent = text;
+      }
       item.append(body);
 
       if (retryMessage) {

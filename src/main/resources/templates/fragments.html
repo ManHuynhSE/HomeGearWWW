@@ -2,7 +2,7 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
 <head th:fragment="head">
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" th:content="${_csrf.token}">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" th:content="${_csrf.token}"><meta name="csrf-header-name" th:content="${_csrf.headerName}">
   <title th:text="${pageTitle ?: 'HomeGear'}">HomeGear</title>
   <meta name="description" content="Thiết bị gia đình và giải pháp thông minh tại HomeGear."
         th:content="${pageDescription ?: 'Thiết bị gia đình và giải pháp thông minh tại HomeGear.'}">
@@ -129,7 +129,11 @@
         quickView.querySelector("#quick-view-stock").textContent = Number(trigger.dataset.productStock) > 0
           ? `Còn ${trigger.dataset.productStock} sản phẩm`
           : "Hết hàng";
-        quickView.querySelector("#quick-view-details").href = trigger.dataset.productUrl || "/products";
+        const detailsLink = quickView.querySelector("#quick-view-details");
+        detailsLink.href = trigger.dataset.productUrl || "/products";
+        detailsLink.dataset.track = "PRODUCT_CLICK";
+        detailsLink.dataset.productId = trigger.dataset.productId || "";
+        detailsLink.dataset.source = trigger.dataset.source || "";
         credit.hidden = !attribution || !sourceUrl;
         credit.textContent = attribution;
         credit.href = sourceUrl;
@@ -194,6 +198,9 @@
               const link = document.createElement("a");
               link.className = "store-suggestion-item";
               link.href = product.url || `/products/${encodeURIComponent(product.id)}`;
+              link.dataset.track = "PRODUCT_CLICK";
+              link.dataset.productId = product.id;
+              link.dataset.source = "SEARCH";
               link.setAttribute("role", "option");
               const name = document.createElement("strong");
               name.textContent = product.name;
@@ -254,8 +261,9 @@
   });
   </script>
   <script th:src="@{/js/chat.js}" defer></script>
+  <script th:src="@{/js/tracker.js}" defer></script>
 </footer>
-<div th:fragment="productCard(product)" class="card product-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+<div th:fragment="productCard(product, source)" class="card product-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
   <div class="product-visual store-product-visual">
     <span th:if="${newArrivalIds.contains(product.id)}" class="product-new-badge">Mới</span>
     <span th:if="${activePromotionIds.contains(product.id)}" class="product-promo-badge"
@@ -273,7 +281,9 @@
   </div>
   <div class="card-body d-flex flex-column p-4">
     <span class="badge bg-primary-subtle text-primary align-self-start mb-2" th:text="${product.category.name}"></span>
-    <h3 class="h5 card-title"><a class="text-decoration-none text-dark" th:href="${product.canonicalPath}" th:text="${product.name}"></a></h3>
+    <h3 class="h5 card-title"><a class="text-decoration-none text-dark" th:href="${product.canonicalPath}"
+                                  data-track="PRODUCT_CLICK" th:attr="data-product-id=${product.id},data-source=${source}"
+                                  th:text="${product.name}"></a></h3>
     <p class="text-secondary small flex-grow-1" th:text="${product.description}"></p>
     <div class="store-card-prices mb-3">
       <span class="price" th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' ₫'"></span>
@@ -284,7 +294,7 @@
         <i class="bi bi-box-seam me-1"></i><span th:if="${product.stock > 0}" th:text="${'Còn ' + product.stock + ' sản phẩm'}"></span><span th:if="${product.stock <= 0}">Hết hàng</span>
       </span>
       <button type="button" class="store-quick-view" data-bs-toggle="modal" data-bs-target="#productQuickView"
-              th:attr="data-product-name=${product.name},data-product-category=${product.category.name},data-product-description=${product.description},data-product-price=${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' ₫',data-product-stock=${product.stock},data-product-image=${product.imageUrl},data-product-attribution=${product.imageAttribution},data-product-source=${product.imageSourceUrl},data-product-url=${product.canonicalPath}">
+              th:attr="data-product-id=${product.id},data-source=${source},data-product-name=${product.name},data-product-category=${product.category.name},data-product-description=${product.description},data-product-price=${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'POINT')} + ' ₫',data-product-stock=${product.stock},data-product-image=${product.imageUrl},data-product-attribution=${product.imageAttribution},data-product-source=${product.imageSourceUrl},data-product-url=${product.canonicalPath}">
         Xem nhanh
       </button>
     </div>

@@ -42,14 +42,15 @@
       <p class="mb-0">Ưu đãi được cấu hình cho sản phẩm <strong th:text="${flashSaleProduct.name}"></strong>.</p>
     </div>
     <div class="flash-sale-timer"><span>Kết thúc sau</span><strong data-countdown-output>--:--:--</strong></div>
-    <a class="btn btn-light fw-semibold" th:href="${flashSaleProduct.canonicalPath}">Xem ưu đãi <i class="bi bi-arrow-right ms-1"></i></a>
+    <a class="btn btn-light fw-semibold" th:href="${flashSaleProduct.canonicalPath}" data-track="PRODUCT_CLICK"
+       th:attr="data-product-id=${flashSaleProduct.id},data-source='HOME'">Xem ưu đãi <i class="bi bi-arrow-right ms-1"></i></a>
   </section>
 
   <section th:if="${!#lists.isEmpty(promotionProducts)}" class="store-product-section mb-5">
     <div class="store-section-heading"><div><p class="store-eyebrow">GIÁ TỐT</p><h2>Đang khuyến mãi</h2></div></div>
     <div class="row g-3">
       <div class="col-sm-6 col-lg-4" th:each="product : ${promotionProducts}">
-        <div th:replace="~{fragments :: productCard(${product})}"></div>
+        <div th:replace="~{fragments :: productCard(${product}, 'HOME')}"></div>
       </div>
     </div>
   </section>
@@ -58,7 +59,7 @@
     <div class="store-section-heading"><div><p class="store-eyebrow">ĐƯỢC QUAN TÂM</p><h2>Sản phẩm bán chạy</h2></div></div>
     <div class="row g-3">
       <div class="col-sm-6 col-lg-4" th:each="product : ${bestSellingProducts}">
-        <div th:replace="~{fragments :: productCard(${product})}"></div>
+        <div th:replace="~{fragments :: productCard(${product}, 'HOME')}"></div>
       </div>
     </div>
   </section>
@@ -67,7 +68,7 @@
     <div class="store-section-heading"><div><p class="store-eyebrow">VỪA CẬP NHẬT</p><h2>Sản phẩm mới về</h2></div></div>
     <div class="row g-3">
       <div class="col-sm-6 col-lg-4" th:each="product : ${newArrivals}">
-        <div th:replace="~{fragments :: productCard(${product})}"></div>
+        <div th:replace="~{fragments :: productCard(${product}, 'HOME')}"></div>
       </div>
     </div>
   </section>

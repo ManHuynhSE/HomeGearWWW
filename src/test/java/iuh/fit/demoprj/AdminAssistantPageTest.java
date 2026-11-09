@@ -77,12 +77,27 @@ class AdminAssistantPageTest {
     }
 
     @Test
+    void trackingEndpointRequiresCsrfButIgnoresUntrustedEventTypes() throws Exception {
+        mockMvc.perform(post("/api/track")
+                        .contentType("application/json")
+                        .content("{\"event\":\"PRODUCT_CLICK\",\"productId\":12,\"source\":\"LISTING\"}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/track").with(csrf())
+                        .contentType("application/json")
+                        .content("{\"event\":\"ADD_TO_CART\",\"productId\":12,\"source\":\"LISTING\"}"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     void storePagesRenderTheChatWidgetAndCsrfToken() throws Exception {
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"hg-store-chat-panel\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"csrf-token\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("/js/chat.js")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"csrf-header-name\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/js/chat.js")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/js/tracker.js")));
     }
 
     @Test

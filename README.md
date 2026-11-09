@@ -40,6 +40,8 @@ AI_API_KEY=google-ai-api-key
 
 Không commit `.env`; file này đã được Git ignore. Có thể bỏ qua hoặc để trống `AI_API_KEY` nếu chỉ chạy các tính năng cửa hàng không dùng AI.
 
+`TRACKING_SALT` dùng để băm session ID cho tracking. Hãy thay giá trị mẫu bằng chuỗi bí mật ngẫu nhiên dài ít nhất 32 ký tự và giữ ổn định qua các lần chạy; không dùng lại API key hoặc mật khẩu database. Nếu chưa cấu hình salt, tracking sẽ bỏ qua sự kiện thay vì lưu session ID chưa được băm.
+
 ## 3. Chạy ứng dụng
 
 **Chạy cơ bản, AI tắt:**

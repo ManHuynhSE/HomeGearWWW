@@ -3,6 +3,11 @@ package iuh.fit.demoprj.controller;
 import iuh.fit.demoprj.service.CatalogService;
 import iuh.fit.demoprj.model.entity.Product;
 import iuh.fit.demoprj.repository.OrderItemRepository;
+import iuh.fit.demoprj.tracking.model.EventSource;
+import iuh.fit.demoprj.tracking.model.EventType;
+import iuh.fit.demoprj.tracking.service.TrackingContext;
+import iuh.fit.demoprj.tracking.service.TrackingContextFactory;
+import iuh.fit.demoprj.tracking.service.TrackingService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -12,6 +17,7 @@ import java.util.stream.IntStream;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +30,15 @@ import java.util.List;
 public class HomeController {
     private final CatalogService catalog;
     private final OrderItemRepository orderItems;
+    private final TrackingService tracking;
+    private final TrackingContextFactory trackingContextFactory;
 
-    public HomeController(CatalogService catalog, OrderItemRepository orderItems) {
+    public HomeController(CatalogService catalog, OrderItemRepository orderItems,
+                          TrackingService tracking, TrackingContextFactory trackingContextFactory) {
         this.catalog = catalog;
         this.orderItems = orderItems;
+        this.tracking = tracking;
+        this.trackingContextFactory = trackingContextFactory;
     }
 
     @GetMapping("/")
@@ -101,12 +112,14 @@ public class HomeController {
     }
 
     @GetMapping("/products/{id}")
-    public String legacyDetail(@PathVariable Long id, Model model, HttpServletRequest request) {
-        return renderProductDetail(catalog.getProductDetail(id), model, request);
+    public String legacyDetail(@PathVariable Long id, Model model, HttpServletRequest request,
+                               Authentication authentication) {
+        return renderProductDetail(catalog.getProductDetail(id), model, request, authentication);
     }
 
     @GetMapping("/san-pham/{slugAndId}")
-    public String slugDetail(@PathVariable String slugAndId, Model model, HttpServletRequest request) {
+    public String slugDetail(@PathVariable String slugAndId, Model model, HttpServletRequest request,
+                             Authentication authentication) {
         int separator = slugAndId.lastIndexOf('-');
         if (separator <= 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -122,10 +135,14 @@ public class HomeController {
         if (!slugAndId.equals(canonicalTail)) {
             return "redirect:" + product.getCanonicalPath();
         }
-        return renderProductDetail(product, model, request);
+        return renderProductDetail(product, model, request, authentication);
     }
 
-    private String renderProductDetail(Product product, Model model, HttpServletRequest request) {
+    private String renderProductDetail(Product product, Model model, HttpServletRequest request,
+                                       Authentication authentication) {
+        TrackingContext trackingContext = trackingContextFactory.create(
+                authentication, request.getSession().getId(), request.getHeader("User-Agent"));
+        tracking.record(product.getId(), EventType.PRODUCT_VIEW, EventSource.DETAIL, trackingContext);
         LocalDateTime now = LocalDateTime.now();
         model.addAttribute("product", product);
         model.addAttribute("promotionActive", product.getOriginalPrice() != null
