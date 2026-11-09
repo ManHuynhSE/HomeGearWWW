@@ -106,9 +106,18 @@ public class AnalyticsService {
 
     public TrackingFunnel getFunnel(LocalDateTime from, LocalDateTime to) {
         validateRange(from, to);
-        List<ProductEngagement> engagement = getAllEngagements(from, to);
-        long views = engagement.stream().mapToLong(ProductEngagement::views).sum();
-        long addToCart = engagement.stream().mapToLong(ProductEngagement::addToCart).sum();
+        Map<Long, EventCounts> eventCounts = readEventCounts(from, to);
+        Set<Long> existingProductIds = new HashSet<>();
+        products.findAllById(eventCounts.keySet())
+                .forEach(product -> existingProductIds.add(product.getId()));
+        long views = eventCounts.entrySet().stream()
+                .filter(entry -> existingProductIds.contains(entry.getKey()))
+                .mapToLong(entry -> entry.getValue().views)
+                .sum();
+        long addToCart = eventCounts.entrySet().stream()
+                .filter(entry -> existingProductIds.contains(entry.getKey()))
+                .mapToLong(entry -> entry.getValue().addToCart)
+                .sum();
         long purchased = readPurchases(from, to).values().stream().mapToLong(Long::longValue).sum();
         return new TrackingFunnel(views, addToCart, purchased);
     }

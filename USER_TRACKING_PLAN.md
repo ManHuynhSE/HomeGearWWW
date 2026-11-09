@@ -199,19 +199,19 @@ CREATE TABLE product_events (
 
 **Mục tiêu:** một lớp cung cấp mọi số liệu tổng hợp cho dashboard và AI.
 
-- [ ] Truy vấn đếm theo `product_id` và `event_type` trong khoảng `[from, to)`. Chọn **nhóm theo cả hai cột rồi gộp trong Java** để hệ số điểm lấy từ cấu hình (không viết cứng trong truy vấn)
-- [ ] Trả về `ProductEngagement` (record/DTO):
+- [x] Truy vấn đếm theo `product_id` và `event_type` trong khoảng `[from, to)`. Chọn **nhóm theo cả hai cột rồi gộp trong Java** để hệ số điểm lấy từ cấu hình (không viết cứng trong truy vấn)
+- [x] Trả về `ProductEngagement` (record/DTO):
   `productId, productName, imageUrl, views, clicks, addToCart, score, purchasedQuantity, conversionRate`
-- [ ] `getTopProducts(from, to, limit, metric)` với `metric` ∈ `SCORE | CLICKS | ADD_TO_CART | VIEWS`; mặc định `SCORE`; sắp xếp giảm dần, hòa điểm thì ưu tiên mới hơn hoặc tên
-- [ ] `getProductEngagement(productId hoặc tên, from, to)`
-- [ ] `getFunnel(from, to)`: tổng lượt xem → tổng thêm giỏ → số lượng đã mua (từ `order_items` của đơn không bị hủy)
-- [ ] `getLowConversionProducts(from, to, minViews, limit)`: xem nhiều nhưng ít mua (gợi ý cho admin xem lại giá/mô tả)
-- [ ] `getTrendingProducts(limit)`: top theo điểm trong 7 ngày, **chỉ sản phẩm đang kinh doanh và còn hàng**
-- [ ] `getRecentlyViewed(userId, limit)`: sản phẩm gần đây của một user (chỉ dùng cho khách đã đăng nhập, userId lấy từ `SecurityContext`)
-- [ ] Chỉ join với sản phẩm còn tồn tại (bỏ dữ liệu mồ côi)
-- [ ] Xử lý chia cho 0 khi tính tỷ lệ chuyển đổi (trả `null` hoặc 0, hiển thị "—")
-- [ ] Khoảng thời gian: dùng nửa mở `[from, to)` thống nhất, tính theo múi giờ cửa hàng (Asia/Ho_Chi_Minh)
-- [ ] Unit/integration test với dữ liệu mẫu biết trước kết quả
+- [x] `getTopProducts(from, to, limit, metric)` với `metric` ∈ `SCORE | CLICKS | ADD_TO_CART | VIEWS`; mặc định `SCORE`; sắp xếp giảm dần, hòa điểm thì ưu tiên mới hơn hoặc tên
+- [x] `getProductEngagement(productId hoặc tên, from, to)`
+- [x] `getFunnel(from, to)`: tổng lượt xem → tổng thêm giỏ → số lượng đã mua (từ `order_items` của đơn không bị hủy)
+- [x] `getLowConversionProducts(from, to, minViews, limit)`: xem nhiều nhưng ít mua (gợi ý cho admin xem lại giá/mô tả)
+- [x] `getTrendingProducts(limit)`: top theo điểm trong 7 ngày, **chỉ sản phẩm đang kinh doanh và còn hàng**
+- [x] `getRecentlyViewed(limit)`: sản phẩm gần đây của khách đã đăng nhập; userId được lấy từ `SecurityContext`
+- [x] Chỉ join với sản phẩm còn tồn tại (bỏ dữ liệu mồ côi)
+- [x] Xử lý chia cho 0 khi tính tỷ lệ chuyển đổi (trả `null` hoặc 0, hiển thị "—")
+- [x] Khoảng thời gian: dùng nửa mở `[from, to)` thống nhất, tính theo múi giờ cửa hàng (Asia/Ho_Chi_Minh)
+- [x] Unit/integration test với dữ liệu mẫu biết trước kết quả
 
 **Hoàn thành khi:** với bộ dữ liệu mẫu, `getTopProducts` trả đúng thứ tự và đúng điểm theo công thức; đổi hệ số trong cấu hình thì thứ tự đổi theo.
 **Ước lượng:** 1,5 ngày
@@ -222,16 +222,16 @@ CREATE TABLE product_events (
 
 **Mục tiêu:** hiển thị số liệu trên trang Tổng quan có sẵn.
 
-- [ ] Thẻ **"Top 5 sản phẩm được quan tâm"**: thứ hạng, ảnh nhỏ, tên (link sang trang sửa sản phẩm), lượt xem, click, thêm giỏ, điểm, thanh ngang thể hiện điểm so với sản phẩm đứng đầu
-- [ ] Bộ chọn khoảng thời gian 7 ngày / 30 ngày / tất cả, gửi bằng tham số GET (`?days=7`) và render phía server; không cần JS phức tạp
-- [ ] Bộ chọn tiêu chí: Điểm / Click / Thêm giỏ / Lượt xem
-- [ ] Thẻ **phễu**: Lượt xem → Thêm giỏ → Đã mua, kèm phần trăm giữa các bước
-- [ ] (Tùy chọn) bảng **"Xem nhiều nhưng ít mua"**
-- [ ] Trạng thái rỗng: chưa có dữ liệu thì hiện thông báo thay vì bảng trống
-- [ ] Thanh ngang dùng CSS thuần; nếu muốn biểu đồ thì nạp Chart.js từ CDN
-- [ ] Ghi chú nhỏ trên giao diện: công thức điểm và khoảng thời gian đang dùng
+- [x] Thẻ **"Top 5 sản phẩm được quan tâm"**: thứ hạng, ảnh nhỏ, tên (link sang trang sửa sản phẩm), lượt xem, click, thêm giỏ, điểm, thanh ngang thể hiện điểm so với sản phẩm đứng đầu
+- [x] Bộ chọn khoảng thời gian 7 ngày / 30 ngày / tất cả, gửi bằng tham số GET (`?days=7`) và render phía server; không cần JS phức tạp
+- [x] Bộ chọn tiêu chí: Điểm / Click / Thêm giỏ / Lượt xem
+- [x] Thẻ **phễu**: Lượt xem → Thêm giỏ → Đã mua, kèm phần trăm giữa các bước
+- [x] (Tùy chọn) bảng **"Xem nhiều nhưng ít mua"**
+- [x] Trạng thái rỗng: chưa có dữ liệu thì hiện thông báo thay vì bảng trống
+- [x] Thanh ngang dùng CSS thuần; nếu muốn biểu đồ thì nạp Chart.js từ CDN
+- [x] Ghi chú nhỏ trên giao diện: công thức điểm và khoảng thời gian đang dùng
 - [ ] Tối ưu: kết quả top có thể cache ngắn hạn (1–5 phút) nếu truy vấn chậm
-- [ ] Giao diện thống nhất với các thẻ hiện có (xanh dương, bo góc, cùng khoảng cách), responsive
+- [x] Giao diện thống nhất với các thẻ hiện có (xanh dương, bo góc, cùng khoảng cách), responsive
 
 **Hoàn thành khi:** dashboard hiển thị đúng Top 5 khớp với dữ liệu trong bảng, đổi bộ lọc thì số liệu đổi theo, trang không lỗi khi chưa có dữ liệu.
 **Ước lượng:** 1,5 ngày

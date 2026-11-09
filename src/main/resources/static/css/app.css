@@ -408,6 +408,25 @@ body.admin-page {
 .admin-icon-btn:hover { border-color: #b7cdf8; background: var(--admin-brand-soft); color: var(--admin-brand-dark); }
 .admin-icon-btn.danger:hover { border-color: #f2c5c2; background: #fff5f4; color: #c34d46; }
 .admin-empty { padding: 24px !important; color: #9aa3af !important; text-align: center; }
+.analytics-filter { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.admin-engagement-table { min-width: 700px; }
+.admin-engagement-product { display: flex; align-items: center; gap: 9px; min-width: 190px; }
+.admin-engagement-product img, .admin-engagement-placeholder { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 8px; background: #f0f5fb; color: var(--admin-brand); object-fit: cover; }
+.admin-engagement-product a, .admin-engagement-name { color: #354155; font-weight: 650; text-decoration: none; }
+.admin-engagement-product a:hover, .admin-engagement-name:hover { color: var(--admin-brand-dark); }
+.admin-engagement-score { min-width: 85px; }
+.admin-engagement-score strong { display: block; color: #263248; }
+.admin-score-track { height: 5px; margin-top: 6px; overflow: hidden; border-radius: 999px; background: #edf2f7; }
+.admin-score-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4f83ef, #21b985); }
+.admin-analytics-note { margin: 12px 0 0; color: var(--admin-muted); font-size: .69rem; line-height: 1.55; }
+.admin-funnel { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; min-height: 150px; }
+.admin-funnel-step { display: grid; justify-items: center; gap: 5px; min-width: 0; padding: 15px 8px; border: 1px solid var(--admin-line); border-radius: 11px; background: #fbfcfe; text-align: center; }
+.admin-funnel-step > span { color: #667286; font-size: .7rem; font-weight: 650; }
+.admin-funnel-step strong { color: var(--admin-brand-dark); font-size: clamp(1.25rem, 2.2vw, 1.75rem); font-weight: 800; line-height: 1.1; }
+.admin-funnel-step small { color: #9aa3af; font-size: .62rem; }
+.admin-funnel-connector { display: grid; justify-items: center; gap: 3px; color: var(--admin-brand); }
+.admin-funnel-connector i { font-size: 1.1rem; }
+.admin-funnel-connector small { max-width: 65px; color: #748196; font-size: .58rem; text-align: center; }
 .product-search { grid-template-columns: minmax(180px, 1fr) auto; max-width: 540px; }
 .admin-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 8px; }
 .admin-form-grid > .btn, .admin-form-grid > a { grid-column: auto; }
@@ -448,6 +467,13 @@ body.admin-page {
     .admin-stats { grid-template-columns: 1fr 1fr; gap: 9px; }
     .admin-stat { min-height: 128px; padding: 14px; }
     .admin-stat-top { font-size: .68rem; }
+    .analytics-filter { grid-template-columns: 1fr 1fr; }
+    .analytics-filter button { grid-column: 1 / -1; }
+    .admin-funnel { grid-template-columns: 1fr; gap: 6px; padding: 5px 15px; }
+    .admin-funnel-step { padding: 10px; }
+    .admin-funnel-connector { display: flex; justify-content: center; gap: 7px; }
+    .admin-funnel-connector i { transform: rotate(90deg); }
+    .admin-funnel-connector small { max-width: none; }
     .admin-stat-top i { width: 29px; height: 29px; }
     .admin-stat strong { font-size: 1.3rem; }
     .admin-stat small { font-size: .63rem; }

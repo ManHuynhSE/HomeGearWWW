@@ -8,6 +8,7 @@
     <div class="admin-nav-label">KHÔNG GIAN QUẢN TRỊ</div>
     <nav class="admin-nav" aria-label="Điều hướng quản trị">
       <a class="active" href="#overview"><i class="bi bi-grid-1x2-fill"></i><span>Tổng quan</span></a>
+      <a href="#engagement"><i class="bi bi-graph-up-arrow"></i><span>Phân tích sản phẩm</span></a>
       <a href="/admin/assistant"><i class="bi bi-stars"></i><span>Trợ lý AI</span></a>
       <a href="#orders"><i class="bi bi-receipt"></i><span>Đơn hàng</span><span class="admin-nav-count" th:text="${newOrderCount}"></span></a>
       <a href="#products"><i class="bi bi-box-seam"></i><span>Sản phẩm</span></a>
@@ -43,6 +44,123 @@
         <article class="admin-stat stat-blue"><div class="admin-stat-top"><span>Tổng đơn hàng</span><i class="bi bi-bag-check"></i></div><strong th:text="${orderCount}"></strong><small><span th:text="${newOrderCount}"></span> đơn mới cần xử lý</small></article>
         <article class="admin-stat stat-violet"><div class="admin-stat-top"><span>Sản phẩm</span><i class="bi bi-box-seam"></i></div><strong th:text="${productCount}"></strong><small><span th:text="${lowStockCount}"></span> sản phẩm sắp hết hàng</small></article>
         <article class="admin-stat stat-orange"><div class="admin-stat-top"><span>Khách hàng</span><i class="bi bi-people"></i></div><strong th:text="${customerCount}"></strong><small>Khách hàng đã đăng ký</small></article>
+      </section>
+
+      <section class="admin-overview-grid admin-section" id="engagement">
+        <article class="admin-panel">
+          <div class="admin-panel-heading">
+            <div><h2>Top 5 sản phẩm được quan tâm</h2><p>Thứ hạng theo lượt xem, tương tác và thêm giỏ.</p></div>
+            <span class="admin-section-icon"><i class="bi bi-trophy"></i></span>
+          </div>
+          <form method="get" action="/admin" class="admin-filter-row analytics-filter">
+            <label class="visually-hidden" for="analytics-days">Khoảng thời gian</label>
+            <select id="analytics-days" class="form-select" name="days">
+              <option value="7" th:selected="${selectedDays == '7'}">7 ngày gần nhất</option>
+              <option value="30" th:selected="${selectedDays == '30'}">30 ngày gần nhất</option>
+              <option value="all" th:selected="${selectedDays == 'all'}">Tất cả</option>
+            </select>
+            <label class="visually-hidden" for="analytics-metric">Tiêu chí xếp hạng</label>
+            <select id="analytics-metric" class="form-select" name="metric">
+              <option value="SCORE" th:selected="${selectedMetric == 'SCORE'}">Điểm quan tâm</option>
+              <option value="CLICKS" th:selected="${selectedMetric == 'CLICKS'}">Lượt click</option>
+              <option value="ADD_TO_CART" th:selected="${selectedMetric == 'ADD_TO_CART'}">Thêm giỏ</option>
+              <option value="VIEWS" th:selected="${selectedMetric == 'VIEWS'}">Lượt xem</option>
+            </select>
+            <button class="btn admin-primary-btn"><i class="bi bi-funnel me-1"></i>Áp dụng</button>
+          </form>
+          <div class="table-responsive admin-table-wrap">
+            <table class="table admin-table admin-engagement-table align-middle mb-0">
+              <thead><tr><th>#</th><th>Sản phẩm</th><th>Lượt xem</th><th>Click</th><th>Thêm giỏ</th><th>Điểm</th></tr></thead>
+              <tbody>
+                <tr th:each="engagement, row : ${topEngagements}">
+                  <td class="text-secondary" th:text="${row.count}"></td>
+                  <td>
+                    <div class="admin-engagement-product">
+                      <img th:if="${engagement.imageUrl != null and !#strings.isEmpty(engagement.imageUrl)}"
+                           th:src="${engagement.imageUrl}" th:alt="${engagement.productName}" loading="lazy">
+                      <span th:unless="${engagement.imageUrl != null and !#strings.isEmpty(engagement.imageUrl)}"
+                            class="admin-engagement-placeholder"><i class="bi bi-box-seam"></i></span>
+                      <a th:href="@{/admin(editProduct=${engagement.productId},days=${selectedDays},metric=${selectedMetric})} + '#products'"
+                         th:text="${engagement.productName}"></a>
+                    </div>
+                  </td>
+                  <td th:text="${engagement.views}"></td>
+                  <td th:text="${engagement.clicks}"></td>
+                  <td th:text="${engagement.addToCart}"></td>
+                  <td class="admin-engagement-score">
+                    <strong th:text="${engagement.score}"></strong>
+                    <div class="admin-score-track" aria-hidden="true">
+                      <span th:style="|width: ${maxEngagementScore == 0 ? 0 : (engagement.score * 100.0 / maxEngagementScore)}%|"></span>
+                    </div>
+                  </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(topEngagements)}">
+                  <td colspan="6" class="admin-empty">Chưa có sự kiện tương tác trong khoảng thời gian này.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="admin-analytics-note">
+            <span th:text="|Điểm = click × ${clickScoreWeight} + thêm giỏ × ${cartScoreWeight}.|"></span>
+            Khoảng thời gian: <span th:text="${analyticsPeriodLabel}"></span>. Tỷ lệ chuyển đổi = số lượng mua / lượt xem.
+          </p>
+        </article>
+
+        <article class="admin-panel">
+          <div class="admin-panel-heading">
+            <div><h2>Phễu mua sắm</h2><p>Sự kiện lượt xem và thêm giỏ đối chiếu với đơn hàng không bị hủy.</p></div>
+            <span class="admin-section-icon"><i class="bi bi-filter"></i></span>
+          </div>
+          <div class="admin-funnel">
+            <div class="admin-funnel-step">
+              <span>Lượt xem</span><strong th:text="${trackingFunnel.views}"></strong><small>Trang chi tiết</small>
+            </div>
+            <div class="admin-funnel-connector">
+              <i class="bi bi-arrow-right"></i>
+              <small th:if="${viewToCartRate == null}">—</small>
+              <small th:unless="${viewToCartRate == null}"
+                     th:text="|${#numbers.formatDecimal(viewToCartRate, 1, 'POINT', 1, 'POINT')}% thêm giỏ|"></small>
+            </div>
+            <div class="admin-funnel-step">
+              <span>Thêm giỏ</span><strong th:text="${trackingFunnel.addToCart}"></strong><small>Thao tác thành công</small>
+            </div>
+            <div class="admin-funnel-connector">
+              <i class="bi bi-arrow-right"></i>
+              <small th:if="${cartToPurchaseRate == null}">—</small>
+              <small th:unless="${cartToPurchaseRate == null}"
+                     th:text="|${#numbers.formatDecimal(cartToPurchaseRate, 1, 'POINT', 1, 'POINT')}% mua|"></small>
+            </div>
+            <div class="admin-funnel-step">
+              <span>Đã mua</span><strong th:text="${trackingFunnel.purchasedQuantity}"></strong><small>Số lượng sản phẩm</small>
+            </div>
+          </div>
+          <p class="admin-analytics-note" th:text="|Khoảng thời gian: ${analyticsPeriodLabel}. Tỷ lệ mua có thể vượt 100% khi một lượt xem dẫn đến mua nhiều sản phẩm.|"></p>
+        </article>
+      </section>
+
+      <section class="admin-panel admin-section" id="low-conversion">
+        <div class="admin-panel-heading">
+          <div><h2>Xem nhiều nhưng ít mua</h2><p>Sản phẩm có ít nhất 10 lượt xem, xếp theo tỷ lệ mua tăng dần.</p></div>
+          <span class="admin-section-icon"><i class="bi bi-exclamation-circle"></i></span>
+        </div>
+        <div class="table-responsive admin-table-wrap" th:if="${!#lists.isEmpty(lowConversionProducts)}">
+          <table class="table admin-table align-middle mb-0">
+            <thead><tr><th>Sản phẩm</th><th>Lượt xem</th><th>Số lượng đã mua</th><th>Tỷ lệ mua</th></tr></thead>
+            <tbody>
+              <tr th:each="engagement : ${lowConversionProducts}">
+                <td><a class="admin-engagement-name"
+                       th:href="@{/admin(editProduct=${engagement.productId},days=${selectedDays},metric=${selectedMetric})} + '#products'"
+                       th:text="${engagement.productName}"></a></td>
+                <td th:text="${engagement.views}"></td>
+                <td th:text="${engagement.purchasedQuantity}"></td>
+                <td th:text="${engagement.conversionRate == null ? '—' : #numbers.formatDecimal(engagement.conversionRate, 1, 'POINT', 1, 'POINT') + '%'}"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p th:if="${#lists.isEmpty(lowConversionProducts)}" class="admin-empty mb-0">
+          Chưa có sản phẩm đủ lượt xem để đánh giá tỷ lệ mua.
+        </p>
       </section>
 
       <section class="admin-overview-grid">

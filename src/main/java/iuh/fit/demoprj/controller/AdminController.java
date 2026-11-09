@@ -4,6 +4,13 @@ import iuh.fit.demoprj.service.CatalogService;
 import iuh.fit.demoprj.service.OrderService;
 import iuh.fit.demoprj.service.AdminService;
 import iuh.fit.demoprj.model.entity.CustomerOrder;
+import iuh.fit.demoprj.tracking.config.TrackingProperties;
+import iuh.fit.demoprj.tracking.model.EngagementMetric;
+import iuh.fit.demoprj.tracking.model.ProductEngagement;
+import iuh.fit.demoprj.tracking.model.TrackingFunnel;
+import iuh.fit.demoprj.tracking.service.AnalyticsService;
+import java.math.RoundingMode;
+import java.time.Clock;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +18,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Controller
 public class AdminController {
@@ -18,14 +27,21 @@ public class AdminController {
     private final OrderService orders;
     private final iuh.fit.demoprj.repository.OrderItemRepository orderItems;
     private final AdminService admin;
+    private final AnalyticsService analytics;
+    private final TrackingProperties trackingProperties;
+    private final Clock clock;
 
     public AdminController(CatalogService catalog, OrderService orders,
                            iuh.fit.demoprj.repository.OrderItemRepository orderItems,
-                           AdminService admin) {
+                           AdminService admin, AnalyticsService analytics,
+                           TrackingProperties trackingProperties, Clock trackingClock) {
         this.catalog = catalog;
         this.orders = orders;
         this.orderItems = orderItems;
         this.admin = admin;
+        this.analytics = analytics;
+        this.trackingProperties = trackingProperties;
+        this.clock = trackingClock;
     }
 
     @GetMapping("/admin/assistant")
@@ -42,6 +58,8 @@ public class AdminController {
                             @RequestParam(required = false) String customerKeyword,
                             @RequestParam(required = false) String orderKeyword,
                             @RequestParam(required = false) String orderStatus,
+                            @RequestParam(defaultValue = "7") String days,
+                            @RequestParam(defaultValue = "SCORE") EngagementMetric metric,
                             Model model) {
         List<CustomerOrder> allOrders = admin.searchOrders(null, null);
         var allProducts = catalog.search(null);
@@ -63,6 +81,24 @@ public class AdminController {
         model.addAttribute("customerKeyword", customerKeyword == null ? "" : customerKeyword);
         model.addAttribute("orderKeyword", orderKeyword == null ? "" : orderKeyword);
         model.addAttribute("orderStatus", orderStatus == null ? "" : orderStatus);
+        AnalyticsRange analyticsRange = analyticsRange(days);
+        List<ProductEngagement> topProducts = analytics.getTopProducts(
+                analyticsRange.from(), analyticsRange.to(), 5, metric);
+        TrackingFunnel funnel = analytics.getFunnel(analyticsRange.from(), analyticsRange.to());
+        model.addAttribute("topEngagements", topProducts);
+        model.addAttribute("maxEngagementScore",
+                topProducts.stream().mapToLong(ProductEngagement::score).max().orElse(0));
+        model.addAttribute("trackingFunnel", funnel);
+        model.addAttribute("viewToCartRate", percentage(funnel.addToCart(), funnel.views()));
+        model.addAttribute("cartToPurchaseRate", percentage(
+                funnel.purchasedQuantity(), funnel.addToCart()));
+        model.addAttribute("lowConversionProducts", analytics.getLowConversionProducts(
+                analyticsRange.from(), analyticsRange.to(), 10, 5));
+        model.addAttribute("selectedDays", analyticsRange.days());
+        model.addAttribute("selectedMetric", metric.name());
+        model.addAttribute("analyticsPeriodLabel", analyticsRange.label());
+        model.addAttribute("clickScoreWeight", trackingProperties.getWeight().getClick());
+        model.addAttribute("cartScoreWeight", trackingProperties.getWeight().getAddToCart());
         if (editProduct != null) {
             model.addAttribute("editProduct", catalog.getProduct(editProduct));
             model.addAttribute("productSpecificationsText", catalog.getProductSpecificationsText(editProduct));
@@ -72,6 +108,36 @@ public class AdminController {
         if (editCategory != null) model.addAttribute("editCategory", catalog.getCategory(editCategory));
         if (editCustomer != null) model.addAttribute("editCustomer", admin.getCustomer(editCustomer));
         return "admin";
+    }
+
+    private String dashboard(Long editProduct, Long editCategory, Long editCustomer,
+                             String productKeyword, String customerKeyword, String orderKeyword,
+                             String orderStatus, Model model) {
+        return dashboard(editProduct, editCategory, editCustomer, productKeyword, customerKeyword,
+                orderKeyword, orderStatus, "7", EngagementMetric.SCORE, model);
+    }
+
+    private AnalyticsRange analyticsRange(String days) {
+        LocalDateTime to = LocalDateTime.now(clock);
+        return switch (days == null ? "" : days.trim().toLowerCase(java.util.Locale.ROOT)) {
+            case "7" -> new AnalyticsRange(to.minusDays(7), to, "7", "7 ngày gần nhất");
+            case "30" -> new AnalyticsRange(to.minusDays(30), to, "30", "30 ngày gần nhất");
+            case "all" -> new AnalyticsRange(LocalDateTime.of(1000, 1, 1, 0, 0), to,
+                    "all", "Toàn bộ dữ liệu còn lưu");
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Khoảng thời gian analytics không hợp lệ.");
+        };
+    }
+
+    private BigDecimal percentage(long numerator, long denominator) {
+        if (denominator == 0) {
+            return null;
+        }
+        return BigDecimal.valueOf(numerator).multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(denominator), 1, RoundingMode.HALF_UP);
+    }
+
+    private record AnalyticsRange(LocalDateTime from, LocalDateTime to, String days, String label) {
     }
 
     @PostMapping("/admin/categories/save")

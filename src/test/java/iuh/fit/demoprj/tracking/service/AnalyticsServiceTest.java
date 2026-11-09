@@ -99,6 +99,10 @@ class AnalyticsServiceTest {
         assertEquals(9L, topByScore.get(0).score());
         assertEquals(new BigDecimal("200.00"), topByScore.get(0).conversionRate());
         assertEquals(List.of(2L, 1L), topByClicks.stream().map(ProductEngagement::productId).toList());
+
+        properties.getWeight().setClick(4);
+        properties.getWeight().setAddToCart(0);
+        assertEquals(2L, analytics.getTopProducts(FROM, TO, 1).get(0).productId());
     }
 
     @Test
@@ -107,9 +111,9 @@ class AnalyticsServiceTest {
                 eventCount(1L, EventType.PRODUCT_VIEW, 4),
                 eventCount(1L, EventType.ADD_TO_CART, 1),
                 eventCount(99L, EventType.PRODUCT_VIEW, 100));
+        List<OrderItemRepository.ProductPurchaseProjection> purchases = List.of(purchaseCount(1L, 2));
         when(events.countByProductAndEventTypeBetween(FROM, TO)).thenReturn(eventCounts);
-        when(orderItems.sumPurchasedQuantityBetween(FROM, TO))
-                .thenReturn(List.of(purchaseCount(1L, 2)));
+        when(orderItems.sumPurchasedQuantityBetween(FROM, TO)).thenReturn(purchases);
         when(products.findAllById(any())).thenReturn(List.of(alpha));
 
         var funnel = analytics.getFunnel(FROM, TO);
@@ -125,8 +129,8 @@ class AnalyticsServiceTest {
     void returnsNullConversionWhenProductHasNoViews() {
         when(products.findById(1L)).thenReturn(Optional.of(alpha));
         when(events.countByProductAndEventTypeBetween(FROM, TO)).thenReturn(List.of());
-        when(orderItems.sumPurchasedQuantityBetween(FROM, TO))
-                .thenReturn(List.of(purchaseCount(1L, 3)));
+        List<OrderItemRepository.ProductPurchaseProjection> purchases = List.of(purchaseCount(1L, 3));
+        when(orderItems.sumPurchasedQuantityBetween(FROM, TO)).thenReturn(purchases);
 
         ProductEngagement engagement = analytics.getProductEngagement(1L, FROM, TO).orElseThrow();
 
@@ -152,6 +156,32 @@ class AnalyticsServiceTest {
 
         assertEquals(List.of(2L, 1L), recentlyViewed.stream().map(Product::getId).toList());
         verify(events).findRecentProductViewsByUserId(eq(42L), eq(EventType.PRODUCT_VIEW), any(Pageable.class));
+    }
+
+    @Test
+    void ranksLowConversionProductsByConversionAndLimitsTrendingToAvailableProducts() {
+        List<ProductEventRepository.EventCountProjection> eventCounts = List.of(
+                eventCount(1L, EventType.PRODUCT_VIEW, 10),
+                eventCount(2L, EventType.PRODUCT_VIEW, 5));
+        List<OrderItemRepository.ProductPurchaseProjection> purchases = List.of(
+                purchaseCount(1L, 0), purchaseCount(2L, 1));
+        when(events.countByProductAndEventTypeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(eventCounts);
+        when(orderItems.sumPurchasedQuantityBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(purchases);
+        when(products.findAllById(any())).thenReturn(List.of(alpha, beta));
+        when(products.findByIdInAndActiveTrueAndStockGreaterThan(List.of(1L, 2L), 0))
+                .thenReturn(List.of(beta));
+
+        List<ProductEngagement> lowConversion =
+                analytics.getLowConversionProducts(FROM, TO, 5, 2);
+        List<ProductEngagement> trending = analytics.getTrendingProducts(5);
+
+        assertEquals(List.of(1L, 2L), lowConversion.stream().map(ProductEngagement::productId).toList());
+        assertEquals(new BigDecimal("0.00"), lowConversion.get(0).conversionRate());
+        assertEquals(List.of(2L), trending.stream().map(ProductEngagement::productId).toList());
+        verify(events).countByProductAndEventTypeBetween(
+                LocalDateTime.of(2026, 11, 2, 12, 0), LocalDateTime.of(2026, 11, 9, 12, 0));
     }
 
     @Test
